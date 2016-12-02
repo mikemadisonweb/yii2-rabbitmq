@@ -2,7 +2,7 @@
 
 namespace mikemadisonweb\rabbitmq\controllers;
 
-use common\components\rabbitmq\BaseRabbitMQ;
+use mikemadisonweb\rabbitmq\components\BaseRabbitMQ;
 use yii\console\Controller;
 use yii\helpers\Console;
 

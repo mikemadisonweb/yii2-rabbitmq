@@ -2,10 +2,9 @@
 
 namespace mikemadisonweb\rabbitmq\controllers;
 
-use common\components\rabbitmq\BaseRabbitMQ;
-use common\components\rabbitmq\Consumer;
+use mikemadisonweb\rabbitmq\components\BaseRabbitMQ;
+use mikemadisonweb\rabbitmq\components\Consumer;
 use yii\console\Controller;
-use yii\helpers\Console;
 
 class ConsumerController extends Controller
 {
