@@ -8,8 +8,8 @@ use yii\console\Controller;
 
 class ConsumerController extends Controller
 {
-    public $memoryLimit;
     public $route;
+    public $memoryLimit = 0;
     public $amount = 0;
     public $debug = false;
     public $withoutSignals = false;
@@ -65,6 +65,7 @@ class ConsumerController extends Controller
     public function init()
     {
         \Yii::$app->rabbitmq->load();
+        $this->setOptions();
     }
 
     /**
@@ -74,7 +75,6 @@ class ConsumerController extends Controller
      */
     public function actionSingle($name)
     {
-        $this->setOptions();
         $serviceName = sprintf(BaseRabbitMQ::CONSUMER_SERVICE_NAME, $name);
         $this->consumer = $this->getConsumer($serviceName);
 
@@ -88,7 +88,6 @@ class ConsumerController extends Controller
      */
     public function actionMultiple($name)
     {
-        $this->setOptions();
         $serviceName = sprintf(BaseRabbitMQ::MULTIPLE_CONSUMER_SERVICE_NAME, $name);
         $this->consumer = $this->getConsumer($serviceName);
 
@@ -113,8 +112,13 @@ class ConsumerController extends Controller
         }
         $this->setDebug();
 
+        $this->amount = (int)$this->amount;
+        $this->memoryLimit = (int)$this->memoryLimit;
         if (!is_numeric($this->amount) || 0 > $this->amount) {
             throw new \InvalidArgumentException('The -m option should be null or greater than 0');
+        }
+        if (!is_numeric($this->memoryLimit) || 0 > $this->memoryLimit) {
+            throw new \InvalidArgumentException('The -l option should be null or greater than 0');
         }
     }
 

@@ -42,7 +42,6 @@ class Consumer extends BaseConsumer
         $this->target = $msgAmount;
         $this->startConsuming();
         while (count($this->getChannel()->callbacks)) {
-//          $this->dispatchEvent(OnConsumeEvent::NAME, new OnConsumeEvent($this));
             $this->maybeStopConsumer();
             if (!$this->forceStop) {
                 try {
@@ -85,18 +84,21 @@ class Consumer extends BaseConsumer
      */
     protected function processMessageQueueCallback(AMQPMessage $msg, $queueName, $callback)
     {
-//        $this->dispatchEvent(BeforeProcessingMessageEvent::NAME,
-//            new BeforeProcessingMessageEvent($this, $msg)
-//        );
+        \Yii::$app->rabbitmq->trigger(RabbitMQEvent::BEFORE_CONSUME, new RabbitMQEvent([
+            'message' => $msg,
+            'consumer' => $this,
+        ]));
         $timeStart = microtime(true);
         try {
             $processFlag = call_user_func($callback, $msg);
             $this->handleProcessMessage($msg, $processFlag);
-//            $this->dispatchEvent(
-//                AfterProcessingMessageEvent::NAME,
-//                new AfterProcessingMessageEvent($this, $msg)
-//            );
-            $this->printToConsole($queueName, $timeStart);
+            \Yii::$app->rabbitmq->trigger(RabbitMQEvent::AFTER_CONSUME, new RabbitMQEvent([
+                'message' => $msg,
+                'consumer' => $this,
+            ]));
+            if ($this->logger['print_console']) {
+                $this->printToConsole($queueName, $timeStart);
+            }
             if ($this->logger['enable']) {
                 \Yii::info([
                     'info' => 'Queue message processed.',
@@ -212,10 +214,8 @@ class Consumer extends BaseConsumer
         $execTime = $this->getExecutionTime($timeStart);
         $memory = $this->getSystemFreeMemory();
         $messageFormat = '%s - Message from queue `%s` consumed successfully! Execution time: %s %s';
-        if ($this->logger['print_console']) {
-            $consoleMessage = sprintf($messageFormat, $curDate, $queueName, $execTime, $memory);
-            $this->stdout($consoleMessage);
-        }
+        $consoleMessage = sprintf($messageFormat, $curDate, $queueName, $execTime, $memory);
+        $this->stdout($consoleMessage);
     }
 
     /**
