@@ -89,7 +89,6 @@ class Consumer extends BaseConsumer
             'consumer' => $this,
         ]));
         $timeStart = microtime(true);
-        $memoryStart = memory_get_usage(true);
         try {
             $processFlag = call_user_func($callback, $msg);
             $this->handleProcessMessage($msg, $processFlag);
@@ -108,7 +107,7 @@ class Consumer extends BaseConsumer
                         'message' => $msg->getBody(),
                         'return_code' => $processFlag,
                         'execution_time' => $this->getExecutionTime($timeStart),
-                        'memory' => $this->getMemory($memoryStart),
+                        'memory' => $this->getMemory(),
                     ],
                 ], $this->logger['category']);
             }
@@ -121,7 +120,7 @@ class Consumer extends BaseConsumer
                         'message' => $msg->getBody(),
                         'stacktrace' => $e->getTraceAsString(),
                         'execution_time' => $this->getExecutionTime($timeStart),
-                        'memory' => $this->getMemory($memoryStart),
+                        'memory' => $this->getMemory(),
                     ],
                 ], $this->logger['category']);
             }
@@ -214,7 +213,7 @@ class Consumer extends BaseConsumer
     {
         $curDate = date('Y-m-d H:i:s');
         $execTime = $this->getExecutionTime($timeStart);
-        $memory = $this->getMemory($memoryStart);
+        $memory = $this->getMemory();
         $messageFormat = '%s - Message from queue `%s` consumed successfully! Execution time: %s %s';
         $consoleMessage = sprintf($messageFormat, $curDate, $queueName, $execTime, $memory);
         $this->stdout($consoleMessage);
@@ -235,11 +234,11 @@ class Consumer extends BaseConsumer
      * @param $memoryStart
      * @return string
      */
-    private function getMemory($memoryStart) {
+    private function getMemory() {
         if ($this->logger['system_memory']) {
             return $this->getSystemFreeMemory();
         } else {
-            return 'Memory usage: ' . $this->getMemoryDiff($memoryStart);
+            return 'Memory usage: ' . $this->getMemoryDiff();
         }
     }
 
@@ -248,15 +247,15 @@ class Consumer extends BaseConsumer
      * @param $memoryStart
      * @return string
      */
-    private function getMemoryDiff($memoryStart) {
-        $memoryDiff = memory_get_usage(true) - $memoryStart;
+    private function getMemoryDiff() {
+        $memory = memory_get_usage(true);
+        if(0 === $memory) {
 
-        if ($memoryDiff < 1024) {
-            return $memoryDiff . 'b';
-        } elseif ($memoryDiff < 1048576) {
-            return round($memoryDiff / 1024, 2) . 'Kb';
+            return '0b';
         }
-        return round($memoryDiff / 1048576, 2) . 'Mb';
+        $unit = ['b','kb','mb','gb','tb','pb'];
+
+        return @round($memory/pow(1024,($i=floor(log($memory,1024)))),2).' '.$unit[$i];
     }
 
     /**

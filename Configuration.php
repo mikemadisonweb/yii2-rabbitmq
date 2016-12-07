@@ -59,24 +59,18 @@ class Configuration extends Component
                 $producer = new Producer($connection);
 
                 //this producer doesn't define an exchange -> using AMQP Default
-                if (!isset($parameters['exchange_options'])) {
-                    $parameters['exchange_options'] = $this->getDefaultExchangeOptions();
-                }
+                $parameters['exchange_options'] = array_replace($this->getDefaultExchangeOptions(), $parameters['exchange_options']);
                 \Yii::$container->invoke([$producer, 'setExchangeOptions'], [$parameters['exchange_options']]);
 
                 //this producer doesn't define a queue -> using AMQP Default
-                if (!isset($parameters['queue_options'])) {
-                    $parameters['queue_options'] = $this->getDefaultQueueOptions();
-                }
+                $parameters['queue_options'] = array_replace($this->getDefaultQueueOptions(), $parameters['queue_options']);
                 \Yii::$container->invoke([$producer, 'setQueueOptions'], [$parameters['queue_options']]);
 
                 if (isset($parameters['auto_setup_fabric']) && !$parameters['auto_setup_fabric']) {
                     \Yii::$container->invoke([$producer, 'disableAutoSetupFabric']);
                 }
 
-                if (!isset($this->logger)) {
-                    $this->logger = $this->getDefaultLoggerOptions();
-                }
+                $this->logger = array_replace($this->getDefaultLoggerOptions(), $this->logger);
                 \Yii::$container->invoke([$producer, 'setLogger'], [$this->logger]);
 
                 return $producer;
@@ -99,15 +93,11 @@ class Configuration extends Component
                 $consumer = new Consumer($connection);
 
                 // if consumer doesn't define an exchange -> using AMQP Default
-                if (!isset($parameters['exchange_options'])) {
-                    $parameters['exchange_options'] = $this->getDefaultExchangeOptions();
-                }
+                $parameters['exchange_options'] = array_replace($this->getDefaultExchangeOptions(), $parameters['exchange_options']);
                 \Yii::$container->invoke([$consumer, 'setExchangeOptions'], [$parameters['exchange_options']]);
 
                 // if consumer doesn't define a queue -> using AMQP Default
-                if (!isset($parameters['queue_options'])) {
-                    $parameters['queue_options'] = $this->getDefaultQueueOptions();
-                }
+                $parameters['queue_options'] = array_replace($this->getDefaultQueueOptions(), $parameters['queue_options']);
                 \Yii::$container->invoke([$consumer, 'setQueueOptions'], [$parameters['queue_options']]);
 
                 if (!isset($parameters['callback']) || !class_exists($parameters['callback'])) {
@@ -138,9 +128,7 @@ class Configuration extends Component
                     \Yii::$container->invoke('setIdleTimeoutExitCode', [$parameters['idle_timeout_exit_code']]);
                 }
 
-                if (!isset($this->logger)) {
-                    $this->logger = $this->getDefaultLoggerOptions();
-                }
+                $this->logger = array_replace($this->getDefaultLoggerOptions(), $this->logger);
                 \Yii::$container->invoke([$consumer, 'setLogger'], [$this->logger]);
 
                 return $consumer;
@@ -166,9 +154,7 @@ class Configuration extends Component
                 $multipleConsumer = new MultipleConsumer($connection);
 
                 // if consumer doesn't define an exchange -> using AMQP Default
-                if (!isset($parameters['exchange_options'])) {
-                    $parameters['exchange_options'] = $this->getDefaultExchangeOptions();
-                }
+                $parameters['exchange_options'] = array_replace($this->getDefaultExchangeOptions(), $parameters['exchange_options']);
                 \Yii::$container->invoke([$multipleConsumer, 'setExchangeOptions'], [$parameters['exchange_options']]);
 
                 if (empty($parameters['queues'])) {
@@ -208,9 +194,7 @@ class Configuration extends Component
                     \Yii::$container->invoke([$multipleConsumer, 'disableAutoSetupFabric']);
                 }
 
-                if (!isset($this->logger)) {
-                    $this->logger = $this->getDefaultLoggerOptions();
-                }
+                $this->logger = array_replace($this->getDefaultLoggerOptions(), $this->logger);
                 \Yii::$container->invoke([$multipleConsumer, 'setLogger'], [$this->logger]);
 
                 return $multipleConsumer;
