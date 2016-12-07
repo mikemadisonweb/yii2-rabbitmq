@@ -13,10 +13,10 @@ class RabbitMQEvent extends Event
     /**
      * @var AMQPMessage
      */
-    protected $message;
+    public $message;
 
     /**
      * @var Consumer
      */
-    protected $consumer;
+    public $consumer;
 }
