@@ -9,16 +9,15 @@ use yii\console\Controller;
 class ConsumerController extends Controller
 {
     public $route;
-    public $messages;
     public $memoryLimit = 0;
-    public $amount = 0;
+    public $messagesLimit = 0;
     public $debug = false;
     public $withoutSignals = false;
 
     protected $consumer;
 
     protected $options = [
-        'm' => 'messages',
+        'm' => 'messagesLimit',
         'l' => 'memoryLimit',
         'r' => 'route',
         'd' => 'debug',
@@ -54,6 +53,7 @@ class ConsumerController extends Controller
             try {
                 $this->consumer->stopConsuming();
             } catch (\Exception $e) {
+                \Yii::error($e);
             }
         }
     }
@@ -79,7 +79,7 @@ class ConsumerController extends Controller
         $serviceName = sprintf(BaseRabbitMQ::CONSUMER_SERVICE_NAME, $name);
         $this->consumer = $this->getConsumer($serviceName);
 
-        return $this->consumer->consume($this->amount);
+        return $this->consumer->consume($this->messagesLimit);
     }
 
     /**
@@ -92,7 +92,7 @@ class ConsumerController extends Controller
         $serviceName = sprintf(BaseRabbitMQ::MULTIPLE_CONSUMER_SERVICE_NAME, $name);
         $this->consumer = $this->getConsumer($serviceName);
 
-        return $this->consumer->consume($this->amount);
+        return $this->consumer->consume($this->messagesLimit);
     }
 
     /**
@@ -113,9 +113,9 @@ class ConsumerController extends Controller
         }
         $this->setDebug();
 
-        $this->amount = (int)$this->amount;
+        $this->messagesLimit = (int)$this->messagesLimit;
         $this->memoryLimit = (int)$this->memoryLimit;
-        if (!is_numeric($this->amount) || 0 > $this->amount) {
+        if (!is_numeric($this->messagesLimit) || 0 > $this->messagesLimit) {
             throw new \InvalidArgumentException('The -m option should be null or greater than 0');
         }
         if (!is_numeric($this->memoryLimit) || 0 > $this->memoryLimit) {

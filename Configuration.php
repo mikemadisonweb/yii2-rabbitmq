@@ -229,6 +229,7 @@ class Configuration extends Component
             'enable' => true,
             'category' => 'application',
             'print_console' => false,
+            'system_memory' => false,
         ];
     }
 

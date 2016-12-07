@@ -89,6 +89,7 @@ class Consumer extends BaseConsumer
             'consumer' => $this,
         ]));
         $timeStart = microtime(true);
+        $memoryStart = memory_get_usage(true);
         try {
             $processFlag = call_user_func($callback, $msg);
             $this->handleProcessMessage($msg, $processFlag);
@@ -107,7 +108,7 @@ class Consumer extends BaseConsumer
                         'message' => $msg->getBody(),
                         'return_code' => $processFlag,
                         'execution_time' => $this->getExecutionTime($timeStart),
-                        'memory' => $this->getSystemFreeMemory(),
+                        'memory' => $this->getMemory($memoryStart),
                     ],
                 ], $this->logger['category']);
             }
@@ -120,7 +121,7 @@ class Consumer extends BaseConsumer
                         'message' => $msg->getBody(),
                         'stacktrace' => $e->getTraceAsString(),
                         'execution_time' => $this->getExecutionTime($timeStart),
-                        'memory' => $this->getSystemFreeMemory(),
+                        'memory' => $this->getMemory($memoryStart),
                     ],
                 ], $this->logger['category']);
             }
@@ -205,6 +206,7 @@ class Consumer extends BaseConsumer
 
     /**
      * Print success message to console
+     *
      * @param $queueName
      * @param $timeStart
      */
@@ -212,7 +214,7 @@ class Consumer extends BaseConsumer
     {
         $curDate = date('Y-m-d H:i:s');
         $execTime = $this->getExecutionTime($timeStart);
-        $memory = $this->getSystemFreeMemory();
+        $memory = $this->getMemory($memoryStart);
         $messageFormat = '%s - Message from queue `%s` consumed successfully! Execution time: %s %s';
         $consoleMessage = sprintf($messageFormat, $curDate, $queueName, $execTime, $memory);
         $this->stdout($consoleMessage);
@@ -229,7 +231,36 @@ class Consumer extends BaseConsumer
     }
 
     /**
-     * Свободная память на сервере.
+     * Get either script memory usage or free system memory info
+     * @param $memoryStart
+     * @return string
+     */
+    private function getMemory($memoryStart) {
+        if ($this->logger['system_memory']) {
+            return $this->getSystemFreeMemory();
+        } else {
+            return 'Memory usage: ' . $this->getMemoryDiff($memoryStart);
+        }
+    }
+
+    /**
+     * Get memory usage in human readable format
+     * @param $memoryStart
+     * @return string
+     */
+    private function getMemoryDiff($memoryStart) {
+        $memoryDiff = memory_get_usage(true) - $memoryStart;
+
+        if ($memoryDiff < 1024) {
+            return $memoryDiff . 'b';
+        } elseif ($memoryDiff < 1048576) {
+            return round($memoryDiff / 1024, 2) . 'Kb';
+        }
+        return round($memoryDiff / 1048576, 2) . 'Mb';
+    }
+
+    /**
+     * Free system memory
      *
      * @return string
      */
