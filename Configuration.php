@@ -59,10 +59,16 @@ class Configuration extends Component
                 $producer = new Producer($connection);
 
                 //this producer doesn't define an exchange -> using AMQP Default
+                if (!isset($parameters['exchange_options'])) {
+                    $parameters['exchange_options'] = [];
+                }
                 $parameters['exchange_options'] = array_replace($this->getDefaultExchangeOptions(), $parameters['exchange_options']);
                 \Yii::$container->invoke([$producer, 'setExchangeOptions'], [$parameters['exchange_options']]);
 
                 //this producer doesn't define a queue -> using AMQP Default
+                if (!isset($parameters['queue_options'])) {
+                    $parameters['queue_options'] = [];
+                }
                 $parameters['queue_options'] = array_replace($this->getDefaultQueueOptions(), $parameters['queue_options']);
                 \Yii::$container->invoke([$producer, 'setQueueOptions'], [$parameters['queue_options']]);
 
@@ -93,10 +99,16 @@ class Configuration extends Component
                 $consumer = new Consumer($connection);
 
                 // if consumer doesn't define an exchange -> using AMQP Default
+                if (!isset($parameters['exchange_options'])) {
+                    $parameters['exchange_options'] = [];
+                }
                 $parameters['exchange_options'] = array_replace($this->getDefaultExchangeOptions(), $parameters['exchange_options']);
                 \Yii::$container->invoke([$consumer, 'setExchangeOptions'], [$parameters['exchange_options']]);
 
                 // if consumer doesn't define a queue -> using AMQP Default
+                if (!isset($parameters['queue_options'])) {
+                    $parameters['queue_options'] = [];
+                }
                 $parameters['queue_options'] = array_replace($this->getDefaultQueueOptions(), $parameters['queue_options']);
                 \Yii::$container->invoke([$consumer, 'setQueueOptions'], [$parameters['queue_options']]);
 
@@ -154,6 +166,9 @@ class Configuration extends Component
                 $multipleConsumer = new MultipleConsumer($connection);
 
                 // if consumer doesn't define an exchange -> using AMQP Default
+                if (!isset($parameters['exchange_options'])) {
+                    $parameters['exchange_options'] = [];
+                }
                 $parameters['exchange_options'] = array_replace($this->getDefaultExchangeOptions(), $parameters['exchange_options']);
                 \Yii::$container->invoke([$multipleConsumer, 'setExchangeOptions'], [$parameters['exchange_options']]);
 
