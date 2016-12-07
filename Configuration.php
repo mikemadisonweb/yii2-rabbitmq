@@ -14,13 +14,9 @@ use yii\base\InvalidConfigException;
 class Configuration extends Component
 {
     public $logger = [];
-
     public $connections = [];
-
     public $producers = [];
-
     public $consumers = [];
-
     public $multipleConsumers = [];
 
     /**

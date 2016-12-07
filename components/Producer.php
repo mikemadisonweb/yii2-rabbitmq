@@ -11,7 +11,6 @@ use PhpAmqpLib\Wire\AMQPTable;
 class Producer extends BaseRabbitMQ implements ProducerInterface
 {
     protected $contentType = 'text/plain';
-
     protected $deliveryMode = 2;
 
     /**

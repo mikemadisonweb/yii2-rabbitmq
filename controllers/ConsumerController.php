@@ -9,6 +9,7 @@ use yii\console\Controller;
 class ConsumerController extends Controller
 {
     public $route;
+    public $messages;
     public $memoryLimit = 0;
     public $amount = 0;
     public $debug = false;
@@ -106,9 +107,9 @@ class ConsumerController extends Controller
             if (!function_exists('pcntl_signal')) {
                 throw new \BadFunctionCallException("Function 'pcntl_signal' is referenced in the php.ini 'disable_functions' and can't be called.");
             }
-            pcntl_signal(SIGTERM, [&$this, 'stopConsumer']);
-            pcntl_signal(SIGINT, [&$this, 'stopConsumer']);
-            pcntl_signal(SIGHUP, [&$this, 'restartConsumer']);
+            pcntl_signal(SIGTERM, [$this, 'stopConsumer']);
+            pcntl_signal(SIGINT, [$this, 'stopConsumer']);
+            pcntl_signal(SIGHUP, [$this, 'restartConsumer']);
         }
         $this->setDebug();
 
