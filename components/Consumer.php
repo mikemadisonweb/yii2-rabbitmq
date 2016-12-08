@@ -4,6 +4,7 @@ namespace mikemadisonweb\rabbitmq\components;
 
 use PhpAmqpLib\Exception\AMQPTimeoutException;
 use PhpAmqpLib\Message\AMQPMessage;
+use yii\helpers\Console;
 
 class Consumer extends BaseConsumer
 {
@@ -97,7 +98,7 @@ class Consumer extends BaseConsumer
                 'consumer' => $this,
             ]));
             if ($this->logger['print_console']) {
-                $this->printToConsole($queueName, $timeStart);
+                $this->printToConsole($queueName, $timeStart, $processFlag);
             }
             if ($this->logger['enable']) {
                 \Yii::info([
@@ -208,15 +209,28 @@ class Consumer extends BaseConsumer
      *
      * @param $queueName
      * @param $timeStart
+     * @param $processFlag
      */
-    protected function printToConsole($queueName, $timeStart)
+    protected function printToConsole($queueName, $timeStart, $processFlag)
     {
+        if ($processFlag === ConsumerInterface::MSG_REJECT_REQUEUE || false === $processFlag) {
+            $messageFormat = '%s - Message from queue `%s` was not processed and sent back to queue! Execution time: %s %s';
+            $color = Console::FG_RED;
+        } elseif ($processFlag === ConsumerInterface::MSG_SINGLE_NACK_REQUEUE) {
+            $messageFormat = '%s - Message from queue `%s` was not processed and sent back to queue! Execution time: %s %s';
+            $color = Console::FG_RED;
+        } elseif ($processFlag === ConsumerInterface::MSG_REJECT) {
+            $messageFormat = '%s - Message from queue `%s` was not processed and dropped from queue! Execution time: %s %s';
+            $color = Console::FG_RED;
+        } else {
+            $messageFormat = '%s - Message from queue `%s` consumed successfully! Execution time: %s %s';
+            $color = Console::FG_YELLOW;
+        }
         $curDate = date('Y-m-d H:i:s');
         $execTime = $this->getExecutionTime($timeStart);
         $memory = $this->getMemory();
-        $messageFormat = '%s - Message from queue `%s` consumed successfully! Execution time: %s %s';
         $consoleMessage = sprintf($messageFormat, $curDate, $queueName, $execTime, $memory);
-        $this->stdout($consoleMessage);
+        $this->stdout($consoleMessage, $color);
     }
 
     /**
