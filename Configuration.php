@@ -243,7 +243,7 @@ class Configuration extends Component
             'name' => '',
             'type' => 'direct',
             'passive' => true,
-            'declare' => true,
+            'declare' => false,
         ];
     }
 
@@ -256,7 +256,7 @@ class Configuration extends Component
     {
         return [
             'name' => '',
-            'declare' => true,
+            'declare' => false,
         ];
     }
 }

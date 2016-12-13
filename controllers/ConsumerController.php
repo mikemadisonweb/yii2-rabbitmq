@@ -96,6 +96,22 @@ class ConsumerController extends Controller
     }
 
     /**
+     * Setup RabbitMQ exchanges and queues based on configuration
+     */
+    public function actionSetupFabric()
+    {
+        $definitions = \Yii::$container->getDefinitions();
+        foreach ($definitions as $definition) {
+            if (is_callable($definition)) {
+                $instance = $definition();
+                if ($instance instanceof BaseRabbitMQ) {
+                    $instance->setupFabric();
+                }
+            }
+        }
+    }
+
+    /**
      * Set options passed by user
      */
     private function setOptions()
