@@ -18,16 +18,21 @@ class Configuration extends Component
     public $producers = [];
     public $consumers = [];
     public $multipleConsumers = [];
+    private $isLoaded = false;
 
     /**
      * Register all required services to service container
      */
     public function load()
     {
+        if ($this->isAleadyLoaded()) {
+            return;
+        }
         $this->loadConnections();
         $this->loadProducers();
         $this->loadConsumers();
         $this->loadMultipleConsumers();
+        $this->isLoaded = true;
     }
 
     /**
@@ -258,5 +263,12 @@ class Configuration extends Component
             'name' => '',
             'declare' => false,
         ];
+    }
+
+    /**
+     * @return bool
+     */
+    private function isAleadyLoaded() {
+        return $this->isLoaded;
     }
 }
