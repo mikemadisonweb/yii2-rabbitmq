@@ -3,7 +3,7 @@
     "description": "Wrapper based on php-amqplib to incorporate messaging in your Yii2 application via RabbitMQ. Inspired by RabbitMqBundle for Symfony 2, really awesome package.",
     "type": "yii2-extension",
     "keywords": ["yii2","extension","rabbitmq","amqp","message queue","distributed systems"],
-    "license": "LGPL-2.1",
+    "license": "MIT",
     "authors": [
         {
             "name": "Mikhail Bakulin",
