@@ -66,7 +66,12 @@ class ConsumerController extends Controller
     public function init()
     {
         \Yii::$app->rabbitmq->load();
+    }
+
+    public function beforeAction($event)
+    {
         $this->setOptions();
+        return parent::beforeAction($event);
     }
 
     /**
