@@ -114,6 +114,10 @@ class Consumer extends BaseConsumer
             }
         } catch (\RuntimeException $e) {
             if ($this->logger['enable']) {
+                if ($this->logger['print_console']) {
+                    $this->printErrorToConsole($e);
+                }
+
                 \Yii::info([
                     'info' => 'Consumer requested restart.',
                     'amqp' => [
@@ -128,29 +132,15 @@ class Consumer extends BaseConsumer
             $this->stopConsuming();
         } catch (\Exception $e) {
             if ($this->logger['enable']) {
-                \Yii::error([
-                    'error' => $e->getMessage(),
-                    'amqp' => [
-                        'queue' => $queueName,
-                        'message' => $msg->getBody(),
-                        'stacktrace' => $e->getTraceAsString(),
-                        'execution_time' => $this->getExecutionTime($timeStart),
-                    ],
-                ], $this->logger['category']);
+                $this->logError($e, $queueName, $msg, $timeStart);
             }
+
             throw $e;
         } catch (\Error $e) {
             if ($this->logger['enable']) {
-                \Yii::error([
-                    'error' => $e->getMessage(),
-                    'amqp' => [
-                        'queue' => $queueName,
-                        'message' => $msg->getBody(),
-                        'stacktrace' => $e->getTraceAsString(),
-                        'execution_time' => $this->getExecutionTime($timeStart),
-                    ],
-                ], $this->logger['category']);
+                $this->logError($e, $queueName, $msg, $timeStart);
             }
+
             throw $e;
         }
     }
@@ -245,7 +235,6 @@ class Consumer extends BaseConsumer
 
     /**
      * Get either script memory usage or free system memory info
-     * @param $memoryStart
      * @return string
      */
     private function getMemory() {
@@ -258,7 +247,6 @@ class Consumer extends BaseConsumer
 
     /**
      * Get memory usage in human readable format
-     * @param $memoryStart
      * @return string
      */
     private function getMemoryDiff() {
@@ -286,5 +274,28 @@ class Consumer extends BaseConsumer
             preg_replace('/\s+/', ' ', $data[0]),
             preg_replace('/\s+/', ' ', $data[1])
         );
+    }
+
+    /**
+     * @param \Throwable $error
+     */
+    private function printErrorToConsole(\Throwable $error)
+    {
+        $color = Console::FG_RED;
+        $consoleMessage = sprintf('Error: %s File: %s Line: %s', $error->getMessage(), $error->getFile(), $error->getLine());
+        $this->stdout($consoleMessage, $color);
+    }
+
+    private function logError(\Throwable $error, $queueName, AMQPMessage $msg, $timeStart)
+    {
+        \Yii::error([
+            'error' => $error->getMessage(),
+            'amqp' => [
+                'queue' => $queueName,
+                'message' => $msg->getBody(),
+                'stacktrace' => $error->getTraceAsString(),
+                'execution_time' => $this->getExecutionTime($timeStart),
+            ],
+        ], $this->logger['category']);
     }
 }

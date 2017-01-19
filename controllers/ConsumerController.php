@@ -49,12 +49,14 @@ class ConsumerController extends Controller
         if ($this->consumer instanceof Consumer) {
             // Process current message, then halt consumer
             $this->consumer->forceStopConsumer();
-            // Halt consumer if waiting for a new message from the queue
+            // Close connection and exit if waiting for messages
             try {
                 $this->consumer->stopConsuming();
             } catch (\Exception $e) {
                 \Yii::error($e);
             }
+            $this->stdout("Daemon stopped by user.\n");
+            exit(0);
         }
     }
 
@@ -68,6 +70,10 @@ class ConsumerController extends Controller
         \Yii::$app->rabbitmq->load();
     }
 
+    /**
+     * @param \yii\base\Action $event
+     * @return bool
+     */
     public function beforeAction($event)
     {
         $this->setOptions();
