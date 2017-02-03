@@ -11,8 +11,8 @@
         }
     ],
     "require": {
-        "yiisoft/yii2": "~2.0",
-        "php-amqplib/php-amqplib": "~2.0"
+        "yiisoft/yii2": "^2.0",
+        "php-amqplib/php-amqplib": "^2.6"
     },
     "autoload": {
         "psr-4": {
