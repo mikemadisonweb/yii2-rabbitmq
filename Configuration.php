@@ -67,21 +67,18 @@ class Configuration extends Component
                 if (!isset($parameters['exchange_options'])) {
                     $parameters['exchange_options'] = [];
                 }
-                $parameters['exchange_options'] = array_replace($this->getDefaultExchangeOptions(), $parameters['exchange_options']);
                 \Yii::$container->invoke([$producer, 'setExchangeOptions'], [$parameters['exchange_options']]);
 
                 //this producer doesn't define a queue -> using AMQP Default
                 if (!isset($parameters['queue_options'])) {
                     $parameters['queue_options'] = [];
                 }
-                $parameters['queue_options'] = array_replace($this->getDefaultQueueOptions(), $parameters['queue_options']);
                 \Yii::$container->invoke([$producer, 'setQueueOptions'], [$parameters['queue_options']]);
 
                 if (isset($parameters['auto_setup_fabric']) && !$parameters['auto_setup_fabric']) {
                     \Yii::$container->invoke([$producer, 'disableAutoSetupFabric']);
                 }
 
-                $this->logger = array_replace($this->getDefaultLoggerOptions(), $this->logger);
                 \Yii::$container->invoke([$producer, 'setLogger'], [$this->logger]);
 
                 return $producer;
@@ -107,14 +104,12 @@ class Configuration extends Component
                 if (!isset($parameters['exchange_options'])) {
                     $parameters['exchange_options'] = [];
                 }
-                $parameters['exchange_options'] = array_replace($this->getDefaultExchangeOptions(), $parameters['exchange_options']);
                 \Yii::$container->invoke([$consumer, 'setExchangeOptions'], [$parameters['exchange_options']]);
 
                 // if consumer doesn't define a queue -> using AMQP Default
                 if (!isset($parameters['queue_options'])) {
                     $parameters['queue_options'] = [];
                 }
-                $parameters['queue_options'] = array_replace($this->getDefaultQueueOptions(), $parameters['queue_options']);
                 \Yii::$container->invoke([$consumer, 'setQueueOptions'], [$parameters['queue_options']]);
 
                 if (!isset($parameters['callback']) || !class_exists($parameters['callback'])) {
@@ -162,7 +157,6 @@ class Configuration extends Component
             $serviceAlias = sprintf(BaseRabbitMQ::MULTIPLE_CONSUMER_SERVICE_NAME, $key);
             \Yii::$container->set($serviceAlias, function () use ($key, $parameters) {
                 $queues = [];
-                $callbacks = [];
 
                 if (!isset($parameters['connection'])) {
                     throw new InvalidConfigException("Please provide `connection` option for consumer `{$key}`.");
@@ -174,7 +168,6 @@ class Configuration extends Component
                 if (!isset($parameters['exchange_options'])) {
                     $parameters['exchange_options'] = [];
                 }
-                $parameters['exchange_options'] = array_replace($this->getDefaultExchangeOptions(), $parameters['exchange_options']);
                 \Yii::$container->invoke([$multipleConsumer, 'setExchangeOptions'], [$parameters['exchange_options']]);
 
                 if (empty($parameters['queues'])) {
@@ -236,39 +229,11 @@ class Configuration extends Component
             'system_memory' => false,
         ];
     }
-
-    /**
-     * Get default AMQP exchange options
-     *
-     * @return array
-     */
-    protected function getDefaultExchangeOptions()
-    {
-        return [
-            'name' => '',
-            'type' => 'direct',
-            'passive' => true,
-            'declare' => false,
-        ];
-    }
-
-    /**
-     * Get default AMQP queue options
-     *
-     * @return array
-     */
-    protected function getDefaultQueueOptions()
-    {
-        return [
-            'name' => '',
-            'declare' => false,
-        ];
-    }
-
     /**
      * @return bool
      */
-    private function isAleadyLoaded() {
+    private function isAleadyLoaded()
+    {
         return $this->isLoaded;
     }
 }

@@ -29,7 +29,7 @@ abstract class BaseConsumer extends BaseRabbitMQ
 
     public function stopConsuming()
     {
-        $this->getChannel()->basic_cancel($this->getConsumerTag());
+        $this->getChannel()->basic_cancel($this->getConsumerTag(), false, true);
     }
 
     protected function maybeStopConsumer()

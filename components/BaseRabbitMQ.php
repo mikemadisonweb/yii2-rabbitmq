@@ -14,6 +14,7 @@ abstract class BaseRabbitMQ
     const CONSUMER_SERVICE_NAME = 'rabbit_mq.consumer.%s';
     const MULTIPLE_CONSUMER_SERVICE_NAME = 'rabbit_mq.multiple_consumer.%s';
     const PRODUCER_SERVICE_NAME = 'rabbit_mq.producer.%s';
+    const BINDING_SERVICE_NAME = 'rabbit_mq.binding.%s';
 
     protected $conn;
 
@@ -38,8 +39,8 @@ abstract class BaseRabbitMQ
 
     protected $exchangeOptions = [
         'passive' => false,
-        'durable' => true,
-        'auto_delete' => false,
+        'durable' => false,
+        'auto_delete' => true,
         'internal' => false,
         'nowait' => false,
         'arguments' => null,
@@ -50,9 +51,9 @@ abstract class BaseRabbitMQ
     protected $queueOptions = [
         'name' => '',
         'passive' => false,
-        'durable' => true,
+        'durable' => false,
         'exclusive' => false,
-        'auto_delete' => false,
+        'auto_delete' => true,
         'nowait' => false,
         'arguments' => null,
         'ticket' => null,

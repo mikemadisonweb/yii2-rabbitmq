@@ -289,7 +289,7 @@ class Consumer extends BaseConsumer
     private function logError(\Throwable $error, $queueName, AMQPMessage $msg, $timeStart)
     {
         \Yii::error([
-            'error' => $error->getMessage(),
+            'msg' => $error->getMessage(),
             'amqp' => [
                 'queue' => $queueName,
                 'message' => $msg->getBody(),
