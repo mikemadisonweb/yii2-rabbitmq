@@ -128,10 +128,11 @@ return [
             // ...
             'on before_consume' => function ($event) {
                 if (isset(\Yii::$app->db)) {
-                    if (\Yii::$app->db->getIsActive()) {
-                        \Yii::$app->db->close();
+                    $db = \Yii::$app->db;
+                    if ($db->getIsActive()) {
+                        $db->close();
                     }
-                    \Yii::$app->db->open();
+                    $db->open();
                 }
             },
         ],
