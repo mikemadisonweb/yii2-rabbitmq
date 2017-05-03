@@ -79,6 +79,7 @@ class Configuration extends Component
                     \Yii::$container->invoke([$producer, 'disableAutoSetupFabric']);
                 }
 
+                $this->logger = array_replace($this->getDefaultLoggerOptions(), $this->logger);
                 \Yii::$container->invoke([$producer, 'setLogger'], [$this->logger]);
 
                 return $producer;
