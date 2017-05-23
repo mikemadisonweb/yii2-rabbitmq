@@ -6,6 +6,10 @@ use mikemadisonweb\rabbitmq\components\BaseRabbitMQ;
 use yii\console\Controller;
 use yii\helpers\Console;
 
+/**
+ * RabbitMQ producer functionality
+ * @package mikemadisonweb\rabbitmq\controllers
+ */
 class ProducerController extends Controller
 {
     const FORMAT_PHP = 'php';

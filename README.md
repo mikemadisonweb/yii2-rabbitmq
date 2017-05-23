@@ -2,7 +2,10 @@ RabbitMQ Extension for Yii2
 ==================
 Wrapper based on php-amqplib to incorporate messaging in your Yii2 application via RabbitMQ. Inspired by RabbitMqBundle for Symfony 2, really awesome package.
 
+This documentation is relevant for the latest stable version of the extension.
+
 [![Latest Stable Version](https://poser.pugx.org/mikemadisonweb/yii2-rabbitmq/v/stable)](https://packagist.org/packages/mikemadisonweb/yii2-rabbitmq)
+[![License](https://poser.pugx.org/mikemadisonweb/yii2-rabbitmq/license)](https://packagist.org/packages/mikemadisonweb/yii2-rabbitmq)
 
 Installation
 ------------
@@ -10,7 +13,7 @@ The preferred way to install this extension is through [composer](http://getcomp
 
 Either run
 ```
-php composer.phar require --prefer-dist mikemadisonweb/yii2-rabbitmq
+php composer.phar require mikemadisonweb/yii2-rabbitmq
 ```
 or add
 ```json
@@ -58,6 +61,9 @@ return [
                     ],
                     'queue_options' => [
                         'name' => 'import_data', // Queue name which will be binded to the exchange adove
+                        'routing_keys' => ['import_data'], // Your custom options
+                        'durable' => true,
+                        'auto_delete' => false,
                     ],
                     'callback' => \path\to\ImportDataConsumer::class,
                 ],
@@ -76,6 +82,30 @@ return [
 Think of a producer as your entry point for a message, then it would be passed to the RabbitMQ queue using specified connection details. Consumer is a daemon service that would take messages from the queue and process them.
 
 If you are interested in more queue and exchange options available, you can find them in section `Defaults` below.
+
+The 'callback' parameter can be a class name or a service name from [dependency injection container](http://www.yiiframework.com/doc-2.0/yii-di-container.html). Starting from Yii version 2.0.11 you can configure your container like this:
+```php
+<?php
+use yii\di\Instance;
+
+return [
+    // ...
+    'container' => [
+        'definitions' => [],
+        'singletons' => [
+            'rabbitmq.import-data.consumer' => [
+                [
+                    'class' => \path\to\ImportDataConsumer::class,
+                ],
+                [
+                    'some-dependency' => Instance::of('dependency-service-name'),
+                ],
+            ],
+        ],
+    ],
+];
+```
+
 #### Multiple consumers
 If you need several consumers you can list respective entries in the configuration, but that would require a separate worker(daemon process) for each of that consumers. While it can be absolutely fine in some cases if you are dealing with small queues which consuming messages really fast you may want to group them into one worker.
 
@@ -235,7 +265,7 @@ For example, to declare an exchange you should provide name and type for it. Oth
         'declare' => true,
     ];
 ```
-As for the queue declaration, all parameters are optional. Even if you does not provide a name for it server will generate it for you: 
+As for the queue declaration, all parameters are optional. Even if you does not provide a name for your queue server will generate unique name for you: 
 ```php
     $queueDefaults = [
         'name' => '',

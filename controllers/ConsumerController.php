@@ -6,6 +6,10 @@ use mikemadisonweb\rabbitmq\components\BaseRabbitMQ;
 use mikemadisonweb\rabbitmq\components\Consumer;
 use yii\console\Controller;
 
+/**
+ * RabbitMQ consumer functionality
+ * @package mikemadisonweb\rabbitmq\controllers
+ */
 class ConsumerController extends Controller
 {
     public $route;

@@ -113,14 +113,10 @@ class Configuration extends Component
                 }
                 \Yii::$container->invoke([$consumer, 'setQueueOptions'], [$parameters['queue_options']]);
 
-                if (!isset($parameters['callback']) || !class_exists($parameters['callback'])) {
-                    throw new InvalidConfigException("Please provide valid class name for consumer `{$key}` callback.");
+                if (!isset($parameters['callback'])) {
+                    throw new InvalidConfigException("Callback not configured for `{$key}`` queue consumer.");
                 }
-                $interfaces = class_implements($parameters['callback']);
-                if (empty($interfaces) || !in_array(ConsumerInterface::class, $interfaces)) {
-                    throw new InvalidConfigException("{$parameters['callback']} should implement ConsumerInterface.");
-                }
-                $callbackClass = new $parameters['callback']();
+                $callbackClass = $this->getCallbackClass($parameters['callback']);
                 \Yii::$container->invoke([$consumer, 'setCallback'], [[$callbackClass, 'execute']]);
                 if (isset($parameters['qos_options'])) {
                     \Yii::$container->invoke([$consumer, 'setQosOptions'], [
@@ -179,7 +175,10 @@ class Configuration extends Component
                 foreach ($parameters['queues'] as $queueName => $queueOptions) {
                     // Rearrange array for consistency
                     $queues[$queueOptions['name']] = $queueOptions;
-                    $callbackClass = new $queueOptions['callback']();
+                    if (!isset($queueOptions['callback'])) {
+                        throw new InvalidConfigException("Callback not configured for `{$queueName}`` queue consumer.");
+                    }
+                    $callbackClass = $this->getCallbackClass($queueOptions['callback']);
                     $queues[$queueOptions['name']]['callback'] = [$callbackClass, 'execute'];
                 }
                 \Yii::$container->invoke([$multipleConsumer, 'setQueues'], [$queues]);
@@ -236,5 +235,28 @@ class Configuration extends Component
     private function isAleadyLoaded()
     {
         return $this->isLoaded;
+    }
+
+    /**
+     * @param $callbackName
+     * @return object
+     * @throws InvalidConfigException
+     */
+    private function getCallbackClass($callbackName)
+    {
+        if (!is_string($callbackName)) {
+            throw new InvalidConfigException("Consumer `callback` parameter value should be a class name or service name in DI container.");
+        }
+        if (!class_exists($callbackName)) {
+            $callbackClass = \Yii::$container->get($callbackName);
+        } else {
+            $callbackClass = new $callbackName();
+        }
+        $interfaces = class_implements($callbackClass);
+        if (empty($interfaces) || !in_array(ConsumerInterface::class, $interfaces)) {
+            throw new InvalidConfigException("{$callbackName} should implement ConsumerInterface.");
+        }
+
+        return $callbackClass;
     }
 }
