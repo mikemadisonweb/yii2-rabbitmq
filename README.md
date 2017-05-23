@@ -79,9 +79,7 @@ return [
     // ...
 ];
 ```
-Think of a producer as your entry point for a message, then it would be passed to the RabbitMQ queue using specified connection details. Consumer is a daemon service that would take messages from the queue and process them.
-
-If you are interested in more queue and exchange options available, you can find them in section `Defaults` below.
+To use this extension you should be familiar with the basic concepts of RabbitMQ. If you are not confident in you knowledge I suggest to read [this article](https://mikemadisonweb.github.io/2017/05/04/tldr-series-rabbitmq/).
 
 The 'callback' parameter can be a class name or a service name from [dependency injection container](http://www.yiiframework.com/doc-2.0/yii-di-container.html). Starting from Yii version 2.0.11 you can configure your container like this:
 ```php
