@@ -229,6 +229,7 @@ class Configuration extends Component
             'system_memory' => false,
         ];
     }
+
     /**
      * @return bool
      */
@@ -252,8 +253,7 @@ class Configuration extends Component
         } else {
             $callbackClass = new $callbackName();
         }
-        $interfaces = class_implements($callbackClass);
-        if (empty($interfaces) || !in_array(ConsumerInterface::className(), $interfaces)) {
+        if (!($callbackClass instanceof ConsumerInterface)) {
             throw new InvalidConfigException("{$callbackName} should implement ConsumerInterface.");
         }
 
