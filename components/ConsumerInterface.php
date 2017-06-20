@@ -31,4 +31,10 @@ interface ConsumerInterface
      * @return mixed false to reject and requeue, any other value to acknowledge
      */
     public function execute(AMQPMessage $msg);
+
+    /**
+     * Returns the fully qualified name of this class.
+     * @return string the fully qualified name of this class.
+     */
+    public static function className();
 }
