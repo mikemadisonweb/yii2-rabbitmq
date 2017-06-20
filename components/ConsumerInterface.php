@@ -34,6 +34,7 @@ interface ConsumerInterface
 
     /**
      * Returns the fully qualified name of this class.
+     * You may extend your class by yii\base\Object.
      * @return string the fully qualified name of this class.
      */
     public static function className();
