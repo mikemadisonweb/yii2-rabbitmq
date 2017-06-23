@@ -277,23 +277,29 @@ class Consumer extends BaseConsumer
     }
 
     /**
-     * @param \Throwable $error
+     * @param \Exception $e
      */
-    private function printErrorToConsole(\Throwable $error)
+    private function printErrorToConsole(\Exception $e)
     {
         $color = Console::FG_RED;
-        $consoleMessage = sprintf('Error: %s File: %s Line: %s', $error->getMessage(), $error->getFile(), $error->getLine());
+        $consoleMessage = sprintf('Error: %s File: %s Line: %s', $e->getMessage(), $e->getFile(), $e->getLine());
         $this->stdout($consoleMessage, $color);
     }
 
-    private function logError(\Throwable $error, $queueName, AMQPMessage $msg, $timeStart)
+    /**
+     * @param \Exception $e
+     * @param $queueName
+     * @param AMQPMessage $msg
+     * @param $timeStart
+     */
+    private function logError(\Exception $e, $queueName, AMQPMessage $msg, $timeStart)
     {
         \Yii::error([
-            'msg' => $error->getMessage(),
+            'msg' => $e->getMessage(),
             'amqp' => [
                 'queue' => $queueName,
                 'message' => $msg->getBody(),
-                'stacktrace' => $error->getTraceAsString(),
+                'stacktrace' => $e->getTraceAsString(),
                 'execution_time' => $this->getExecutionTime($timeStart),
             ],
         ], $this->logger['category']);

@@ -7,12 +7,13 @@ use mikemadisonweb\rabbitmq\components\Consumer;
 use mikemadisonweb\rabbitmq\components\ConsumerInterface;
 use mikemadisonweb\rabbitmq\components\MultipleConsumer;
 use mikemadisonweb\rabbitmq\components\Producer;
-use mikemadisonweb\rabbitmq\lib\AMQPLazyConnection;
 use yii\base\Component;
 use yii\base\InvalidConfigException;
 
 class Configuration extends Component
 {
+    const CONNECTION_CLASS = '\PhpAmqpLib\Connection\AMQPLazyConnection';
+
     public $logger = [];
     public $connections = [];
     public $producers = [];
@@ -43,7 +44,7 @@ class Configuration extends Component
         foreach ($this->connections as $key => $parameters) {
             $serviceAlias = sprintf(BaseRabbitMQ::CONNECTION_SERVICE_NAME, $key);
             \Yii::$container->set($serviceAlias, function () use ($parameters) {
-                $factory = new AbstractConnectionFactory(AMQPLazyConnection::className(), $parameters);
+                $factory = new AbstractConnectionFactory(self::CONNECTION_CLASS, $parameters);
                 return $factory->createConnection();
             });
         }

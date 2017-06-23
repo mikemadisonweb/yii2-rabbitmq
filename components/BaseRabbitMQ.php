@@ -5,7 +5,6 @@ namespace mikemadisonweb\rabbitmq\components;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Connection\AMQPLazyConnection;
-use yii\base\Component;
 use yii\helpers\Console;
 
 abstract class BaseRabbitMQ
