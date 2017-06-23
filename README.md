@@ -65,7 +65,7 @@ return [
                         'durable' => true,
                         'auto_delete' => false,
                     ],
-                    'callback' => \path\to\ImportDataConsumer::class,
+                    'callback' => \path\to\ImportDataConsumer::className(),
                 ],
             ],
         ],
@@ -73,8 +73,8 @@ return [
     ],
     // ...
     'controllerMap' => [
-        'rabbitmq-consumer' => \mikemadisonweb\rabbitmq\controllers\ConsumerController::className(),
-        'rabbitmq-producer' => \mikemadisonweb\rabbitmq\controllers\ProducerController::className(),
+        'rabbitmq-consumer' => \mikemadisonweb\rabbitmq\controllers\ConsumerController::className()Name(),
+        'rabbitmq-producer' => \mikemadisonweb\rabbitmq\controllers\ProducerController::className()Name(),
     ],
     // ...
 ];
@@ -93,7 +93,7 @@ return [
         'singletons' => [
             'rabbitmq.import-data.consumer' => [
                 [
-                    'class' => \path\to\ImportDataConsumer::class,
+                    'class' => \path\to\ImportDataConsumer::className(),
                 ],
                 [
                     'some-dependency' => Instance::of('dependency-service-name'),
@@ -127,12 +127,12 @@ return [
                     'queues' => [
                         'import_data' => [
                             'name' => 'import_data',
-                            'callback' => \path\to\ImportDataConsumer::class,
+                            'callback' => \path\to\ImportDataConsumer::className(),
                             'routing_keys' => ['import_data'], // Queue will be binded using routing key
                         ],
                         'update_index' => [
                             'name' => 'update_index',
-                            'callback' => \path\to\UpdateIndexConsumer::class,
+                            'callback' => \path\to\UpdateIndexConsumer::className(),
                             'routing_keys' => ['update_index'],
                         ],
                     ],

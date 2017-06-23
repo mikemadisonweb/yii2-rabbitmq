@@ -7,7 +7,7 @@ use mikemadisonweb\rabbitmq\components\Consumer;
 use mikemadisonweb\rabbitmq\components\ConsumerInterface;
 use mikemadisonweb\rabbitmq\components\MultipleConsumer;
 use mikemadisonweb\rabbitmq\components\Producer;
-use PhpAmqpLib\Connection\AMQPLazyConnection;
+use mikemadisonweb\rabbitmq\lib\AMQPLazyConnection;
 use yii\base\Component;
 use yii\base\InvalidConfigException;
 
@@ -43,7 +43,7 @@ class Configuration extends Component
         foreach ($this->connections as $key => $parameters) {
             $serviceAlias = sprintf(BaseRabbitMQ::CONNECTION_SERVICE_NAME, $key);
             \Yii::$container->set($serviceAlias, function () use ($parameters) {
-                $factory = new AbstractConnectionFactory(AMQPLazyConnection::class, $parameters);
+                $factory = new AbstractConnectionFactory(AMQPLazyConnection::className(), $parameters);
                 return $factory->createConnection();
             });
         }
@@ -229,6 +229,7 @@ class Configuration extends Component
             'system_memory' => false,
         ];
     }
+
     /**
      * @return bool
      */
@@ -252,8 +253,7 @@ class Configuration extends Component
         } else {
             $callbackClass = new $callbackName();
         }
-        $interfaces = class_implements($callbackClass);
-        if (empty($interfaces) || !in_array(ConsumerInterface::class, $interfaces)) {
+        if (!($callbackClass instanceof ConsumerInterface)) {
             throw new InvalidConfigException("{$callbackName} should implement ConsumerInterface.");
         }
 
