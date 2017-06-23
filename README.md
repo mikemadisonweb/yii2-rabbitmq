@@ -65,7 +65,8 @@ return [
                         'durable' => true,
                         'auto_delete' => false,
                     ],
-                    'callback' => \path\to\ImportDataConsumer::className(),
+                    // Or just '\path\to\ImportDataConsumer' in PHP 5.4
+                    'callback' => \path\to\ImportDataConsumer::class,
                 ],
             ],
         ],
@@ -73,8 +74,8 @@ return [
     ],
     // ...
     'controllerMap' => [
-        'rabbitmq-consumer' => \mikemadisonweb\rabbitmq\controllers\ConsumerController::className()Name(),
-        'rabbitmq-producer' => \mikemadisonweb\rabbitmq\controllers\ProducerController::className()Name(),
+        'rabbitmq-consumer' => \mikemadisonweb\rabbitmq\controllers\ConsumerController::class,
+        'rabbitmq-producer' => \mikemadisonweb\rabbitmq\controllers\ProducerController::class,
     ],
     // ...
 ];
@@ -93,7 +94,7 @@ return [
         'singletons' => [
             'rabbitmq.import-data.consumer' => [
                 [
-                    'class' => \path\to\ImportDataConsumer::className(),
+                    'class' => \path\to\ImportDataConsumer::class,
                 ],
                 [
                     'some-dependency' => Instance::of('dependency-service-name'),
@@ -127,12 +128,12 @@ return [
                     'queues' => [
                         'import_data' => [
                             'name' => 'import_data',
-                            'callback' => \path\to\ImportDataConsumer::className(),
+                            'callback' => \path\to\ImportDataConsumer::class,
                             'routing_keys' => ['import_data'], // Queue will be binded using routing key
                         ],
                         'update_index' => [
                             'name' => 'update_index',
-                            'callback' => \path\to\UpdateIndexConsumer::className(),
+                            'callback' => \path\to\UpdateIndexConsumer::class,
                             'routing_keys' => ['update_index'],
                         ],
                     ],
