@@ -287,12 +287,12 @@ class Consumer extends BaseConsumer
     }
 
     /**
-     * @param \Exception $e
+     * @param \Throwable $e
      * @param $queueName
      * @param AMQPMessage $msg
      * @param $timeStart
      */
-    private function logError(\Exception $e, $queueName, AMQPMessage $msg, $timeStart)
+    private function logError($e, $queueName, AMQPMessage $msg, $timeStart)
     {
         \Yii::error([
             'msg' => $e->getMessage(),
