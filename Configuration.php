@@ -26,7 +26,7 @@ class Configuration extends Component
      */
     public function load()
     {
-        if ($this->isAleadyLoaded()) {
+        if ($this->isAlreadyLoaded()) {
             return;
         }
         $this->loadConnections();
@@ -234,7 +234,7 @@ class Configuration extends Component
     /**
      * @return bool
      */
-    private function isAleadyLoaded()
+    private function isAlreadyLoaded()
     {
         return $this->isLoaded;
     }
