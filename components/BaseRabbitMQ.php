@@ -96,7 +96,7 @@ abstract class BaseRabbitMQ
 
     public function reconnect()
     {
-        if (!$this->conn->isConnected()) {
+        if ($this->conn->isConnected()) {
             return;
         }
         $this->conn->reconnect();
