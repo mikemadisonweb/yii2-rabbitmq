@@ -146,7 +146,7 @@ return [
 ```
 Be aware that all queues are under the same exchange, it's up to you to set the correct routing for callbacks.
 #### Lifecycle events
-There are also couple of lifecycle events implemented: before_consume and after_consume. You can use them for any additional work you need to do before or after message been consumed. For example, reopen database connection for it not to be closed by timeout as a consumer is a long-running process: 
+There are also couple of lifecycle events implemented: before_consume, after_consume, before_publish, after_publish. You can use them for any additional work you need to do before or after message been consumed/published. For example, reopen database connection for it not to be closed by timeout as a consumer is a long-running process: 
 ```php
 <?php
 // config/main.php
