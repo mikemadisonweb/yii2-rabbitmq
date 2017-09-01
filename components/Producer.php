@@ -69,14 +69,14 @@ class Producer extends BaseRabbitMQ implements ProducerInterface
             $msg->set('application_headers', $headersTable);
         }
 
-        \Yii::$app->rabbitmq->trigger(RabbitMQPublishEvent::BEFORE_PUBLISH, new RabbitMQPublishEvent([
+        \Yii::$app->rabbitmq->trigger(RabbitMQPublisherEvent::BEFORE_PUBLISH, new RabbitMQPublisherEvent([
             'message' => $msg,
             'producer' => $this,
         ]));
 
         $this->getChannel()->basic_publish($msg, $this->exchangeOptions['name'], (string)$routingKey);
 
-        \Yii::$app->rabbitmq->trigger(RabbitMQPublishEvent::AFTER_PUBLISH, new RabbitMQPublishEvent([
+        \Yii::$app->rabbitmq->trigger(RabbitMQPublisherEvent::AFTER_PUBLISH, new RabbitMQPublisherEvent([
             'message' => $msg,
             'producer' => $this,
         ]));
