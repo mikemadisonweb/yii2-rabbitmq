@@ -18,5 +18,5 @@ class RabbitMQPublisherEvent extends Event
     /**
      * @var Consumer
      */
-    public $publisher;
+    public $producer;
 }
