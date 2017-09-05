@@ -87,7 +87,7 @@ class Producer extends BaseRabbitMQ implements ProducerInterface
                 'amqp' => [
                     'body' => $msg->getBody(),
                     'routingkeys' => $routingKey,
-                    'properties' => $msg->get_properties(),
+                    'properties' => array_intersect_key($msg->get_properties(), $additionalProperties),
                     'headers' => $msg->has('application_headers') ? $msg->get('application_headers')->getNativeData() : $headers,
                 ],
             ], $this->logger['category']);
