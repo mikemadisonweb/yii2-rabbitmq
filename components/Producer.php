@@ -85,10 +85,10 @@ class Producer extends BaseRabbitMQ implements ProducerInterface
             \Yii::info([
                 'info' => 'AMQP message published',
                 'amqp' => [
-                    'body' => $msgBody,
+                    'body' => $msg->getBody(),
                     'routingkeys' => $routingKey,
-                    'properties' => $additionalProperties,
-                    'headers' => $headers,
+                    'properties' => $msg->get_properties(),
+                    'headers' => $msg->has('application_headers') ? $msg->get('application_headers')->getNativeData() : $headers,
                 ],
             ], $this->logger['category']);
         }
