@@ -76,11 +76,6 @@ class Producer extends BaseRabbitMQ implements ProducerInterface
 
         $this->getChannel()->basic_publish($msg, $this->exchangeOptions['name'], (string)$routingKey);
 
-        \Yii::$app->rabbitmq->trigger(RabbitMQPublisherEvent::AFTER_PUBLISH, new RabbitMQPublisherEvent([
-            'message' => $msg,
-            'producer' => $this,
-        ]));
-
         if ($this->logger['enable']) {
             \Yii::info([
                 'info' => 'AMQP message published',
@@ -92,5 +87,10 @@ class Producer extends BaseRabbitMQ implements ProducerInterface
                 ],
             ], $this->logger['category']);
         }
+
+        \Yii::$app->rabbitmq->trigger(RabbitMQPublisherEvent::AFTER_PUBLISH, new RabbitMQPublisherEvent([
+            'message' => $msg,
+            'producer' => $this,
+        ]));
     }
 }
