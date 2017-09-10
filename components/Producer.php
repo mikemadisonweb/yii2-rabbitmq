@@ -68,17 +68,29 @@ class Producer extends BaseRabbitMQ implements ProducerInterface
             $headersTable = new AMQPTable($headers);
             $msg->set('application_headers', $headersTable);
         }
+
+        \Yii::$app->rabbitmq->trigger(RabbitMQPublisherEvent::BEFORE_PUBLISH, new RabbitMQPublisherEvent([
+            'message' => $msg,
+            'producer' => $this,
+        ]));
+
         $this->getChannel()->basic_publish($msg, $this->exchangeOptions['name'], (string)$routingKey);
+
         if ($this->logger['enable']) {
             \Yii::info([
                 'info' => 'AMQP message published',
                 'amqp' => [
-                    'body' => $msgBody,
+                    'body' => $msg->getBody(),
                     'routingkeys' => $routingKey,
-                    'properties' => $additionalProperties,
-                    'headers' => $headers,
+                    'properties' => array_intersect_key($msg->get_properties(), $additionalProperties),
+                    'headers' => $msg->has('application_headers') ? $msg->get('application_headers')->getNativeData() : $headers,
                 ],
             ], $this->logger['category']);
         }
+
+        \Yii::$app->rabbitmq->trigger(RabbitMQPublisherEvent::AFTER_PUBLISH, new RabbitMQPublisherEvent([
+            'message' => $msg,
+            'producer' => $this,
+        ]));
     }
 }
