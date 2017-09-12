@@ -240,7 +240,7 @@ class ImportDataConsumer implements ConsumerInterface
 You can format your message as you wish(JSON, XML, etc) the only restriction is that it should be a string. Here is an example how you can publish a message:
 ```php
 \Yii::$app->rabbitmq->load();
-$producer = \Yii::$container->get(sprintf('rabbit_mq.producer.%s', 'exchange_name'));
+$producer = \Yii::$container->get(sprintf('rabbit_mq.producer.%s', 'import_data'));
 $msg = serialize(['dataset_id' => $dataset->id, 'linked_datasets' => []]);
 $producer->publish($msg, 'import_data');
 ```
