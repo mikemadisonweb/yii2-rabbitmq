@@ -85,7 +85,7 @@ class Consumer extends BaseConsumer
      */
     protected function processMessageQueueCallback(AMQPMessage $msg, $queueName, $callback)
     {
-        \Yii::$app->rabbitmq->trigger(RabbitMQEvent::BEFORE_CONSUME, new RabbitMQEvent([
+        \Yii::$app->rabbitmq->trigger(RabbitMQConsumerEvent::BEFORE_CONSUME, new RabbitMQConsumerEvent([
             'message' => $msg,
             'consumer' => $this,
         ]));
@@ -93,7 +93,7 @@ class Consumer extends BaseConsumer
         try {
             $processFlag = call_user_func($callback, $msg);
             $this->handleProcessMessage($msg, $processFlag);
-            \Yii::$app->rabbitmq->trigger(RabbitMQEvent::AFTER_CONSUME, new RabbitMQEvent([
+            \Yii::$app->rabbitmq->trigger(RabbitMQConsumerEvent::AFTER_CONSUME, new RabbitMQConsumerEvent([
                 'message' => $msg,
                 'consumer' => $this,
             ]));
