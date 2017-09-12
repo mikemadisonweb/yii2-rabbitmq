@@ -26,9 +26,8 @@ Configuration
 This extension facilitates creation of RabbitMQ [producers and consumers](https://www.rabbitmq.com/tutorials/tutorial-three-php.html) to meet your specific needs. This is an example basic config:
 ```php
 <?php
-// config/main.php
 return [
-    // ...
+    // should be in common.php
     'components'    => [
         // ...
         'rabbitmq'  => [
@@ -72,7 +71,7 @@ return [
         ],
         // ...
     ],
-    // ...
+    // should be in console.php
     'controllerMap' => [
         'rabbitmq-consumer' => \mikemadisonweb\rabbitmq\controllers\ConsumerController::class,
         'rabbitmq-producer' => \mikemadisonweb\rabbitmq\controllers\ProducerController::class,
