@@ -252,7 +252,7 @@ All default options are taken from php-amqplib library. If you are not familiar 
 
 For example, to declare an exchange you should provide name and type for it. Other optional parameters with corresponding default values are listed below:
 ```php
-    $queueDefaults = [
+    $exchangeOptions = [
         'passive' => false,
         'durable' => false,
         'auto_delete' => true,
@@ -265,7 +265,7 @@ For example, to declare an exchange you should provide name and type for it. Oth
 ```
 As for the queue declaration, all parameters are optional. Even if you does not provide a name for your queue server will generate unique name for you: 
 ```php
-    $queueDefaults = [
+    $queueOptions = [
         'name' => '',
         'passive' => false,
         'durable' => false,
