@@ -64,13 +64,13 @@ class Configuration extends Component
                 $connection = \Yii::$container->get(sprintf('rabbit_mq.connection.%s', $parameters['connection']));
                 $producer = new Producer($connection);
 
-                //this producer doesn't define an exchange -> using AMQP Default
+                // this producer doesn't define an exchange -> using AMQP Default
                 if (!isset($parameters['exchange_options'])) {
                     $parameters['exchange_options'] = [];
                 }
                 \Yii::$container->invoke([$producer, 'setExchangeOptions'], [$parameters['exchange_options']]);
 
-                //this producer doesn't define a queue -> using AMQP Default
+                // this producer doesn't define a queue -> using AMQP Default
                 if (!isset($parameters['queue_options'])) {
                     $parameters['queue_options'] = [];
                 }
@@ -167,6 +167,12 @@ class Configuration extends Component
                     $parameters['exchange_options'] = [];
                 }
                 \Yii::$container->invoke([$multipleConsumer, 'setExchangeOptions'], [$parameters['exchange_options']]);
+
+                // if consumer doesn't define a queue -> using AMQP Default
+                if (!isset($parameters['queue_options'])) {
+                    $parameters['queue_options'] = [];
+                }
+                \Yii::$container->invoke([$multipleConsumer, 'setQueueOptions'], [$parameters['queue_options']]);
 
                 if (empty($parameters['queues'])) {
                     throw new InvalidConfigException(
