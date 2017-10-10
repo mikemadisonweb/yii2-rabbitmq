@@ -272,6 +272,7 @@ internal | no | boolean | false | Internal exchange may not be used directly by 
 nowait | no | boolean | false | Client may send next request immediately after sending the first one, no waiting for reply is required
 arguments | no | array | null | A set of arguments for the declaration.
 ticket | no | integer | null | Access ticket
+
 Good use-case of the `arguments` parameter usage can be a creation of a [dead-letter-exchange](https://github.com/php-amqplib/php-amqplib/blob/master/demo/queue_arguments.php#L17).
 #####  Queue
 As for the queue declaration, all parameters are optional. Even if you does not provide a name for your queue server will generate unique name for you: 
@@ -286,4 +287,5 @@ exclusive | no | boolean | false | Exclusive queues may only be accessed by the 
 nowait | no | boolean | false | Client may send next request immediately after sending the first one, no waiting for reply is required
 arguments | false | array | null | A set of arguments for the declaration. 
 ticket | no | integer | null | Access ticket
+
 Beware that not all these options are allowed to be changed 'on-the-fly', in other words after queue or exchange had already been created. Otherwise, you will receive an error. 
