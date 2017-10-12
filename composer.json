@@ -19,5 +19,8 @@
         "psr-4": {
             "mikemadisonweb\\rabbitmq\\": ""
         }
+    },
+    "extra": {
+        "bootstrap": "mikemadisonweb\\rabbitmq\\Configuration"
     }
 }

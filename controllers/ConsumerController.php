@@ -69,11 +69,6 @@ class ConsumerController extends Controller
         // TODO: Implement restarting of consumer
     }
 
-    public function init()
-    {
-        \Yii::$app->rabbitmq->load();
-    }
-
     /**
      * @param \yii\base\Action $event
      * @return bool

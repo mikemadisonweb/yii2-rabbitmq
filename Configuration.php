@@ -9,8 +9,9 @@ use mikemadisonweb\rabbitmq\components\MultipleConsumer;
 use mikemadisonweb\rabbitmq\components\Producer;
 use yii\base\Component;
 use yii\base\InvalidConfigException;
+use yii\base\BootstrapInterface;
 
-class Configuration extends Component
+class Configuration extends Component implements BootstrapInterface
 {
     const CONNECTION_CLASS = '\PhpAmqpLib\Connection\AMQPLazyConnection';
 
@@ -23,8 +24,9 @@ class Configuration extends Component
 
     /**
      * Register all required services to service container
+     * @inheritdoc
      */
-    public function load()
+    public function bootstrap($app)
     {
         if ($this->isAlreadyLoaded()) {
             return;

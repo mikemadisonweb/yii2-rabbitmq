@@ -44,11 +44,6 @@ class ProducerController extends Controller
         return array_merge(parent::optionAliases(), $this->options);
     }
 
-    public function init()
-    {
-        \Yii::$app->rabbitmq->load();
-    }
-
     /**
      * Pubish messages from STDIN to queue
      * @param $name
