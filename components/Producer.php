@@ -2,6 +2,7 @@
 
 namespace mikemadisonweb\rabbitmq\components;
 
+use mikemadisonweb\rabbitmq\events\RabbitMQPublisherEvent;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 
@@ -81,7 +82,7 @@ class Producer extends BaseRabbitMQ implements ProducerInterface
                 'info' => 'AMQP message published',
                 'amqp' => [
                     'body' => $msg->getBody(),
-                    'routingkeys' => $routingKey,
+                    'routing_keys' => $routingKey,
                     'properties' => array_intersect_key($msg->get_properties(), $additionalProperties),
                     'headers' => $msg->has('application_headers') ? $msg->get('application_headers')->getNativeData() : $headers,
                 ],

@@ -73,7 +73,7 @@ abstract class BaseConsumer extends BaseRabbitMQ
      * @param int $prefetchCount
      * @param bool $global
      */
-    public function setQosOptions($prefetchSize = 0, $prefetchCount = 0, $global = false)
+    public function setQosOptions($prefetchSize, $prefetchCount, $global)
     {
         $this->getChannel()->basic_qos($prefetchSize, $prefetchCount, $global);
     }

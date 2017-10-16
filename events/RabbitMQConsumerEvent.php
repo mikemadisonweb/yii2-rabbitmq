@@ -1,11 +1,10 @@
 <?php
 
-namespace mikemadisonweb\rabbitmq\components;
+namespace mikemadisonweb\rabbitmq\events;
 
-use PhpAmqpLib\Message\AMQPMessage;
 use yii\base\Event;
 
-class RabbitMQEvent extends Event
+class RabbitMQConsumerEvent extends Event
 {
     const BEFORE_CONSUME = 'before_consume';
     const AFTER_CONSUME  = 'after_consume';

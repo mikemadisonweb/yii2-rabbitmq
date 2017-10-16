@@ -11,7 +11,7 @@
         }
     ],
     "require": {
-      "php": ">=5.4.0",
+      "php": ">=7.0",
       "yiisoft/yii2": "^2.0",
       "php-amqplib/php-amqplib": "^2.6"
     },
@@ -21,6 +21,6 @@
         }
     },
     "extra": {
-        "bootstrap": "mikemadisonweb\\rabbitmq\\Configuration"
+        "bootstrap": "mikemadisonweb\\rabbitmq\\DependencyInjection"
     }
 }

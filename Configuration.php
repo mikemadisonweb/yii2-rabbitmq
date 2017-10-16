@@ -1,265 +1,172 @@
 <?php
+
 namespace mikemadisonweb\rabbitmq;
 
-use mikemadisonweb\rabbitmq\components\AbstractConnectionFactory;
-use mikemadisonweb\rabbitmq\components\BaseRabbitMQ;
-use mikemadisonweb\rabbitmq\components\Consumer;
-use mikemadisonweb\rabbitmq\components\ConsumerInterface;
-use mikemadisonweb\rabbitmq\components\MultipleConsumer;
-use mikemadisonweb\rabbitmq\components\Producer;
+use yii\base\Application;
 use yii\base\Component;
 use yii\base\InvalidConfigException;
-use yii\base\BootstrapInterface;
 
-class Configuration extends Component implements BootstrapInterface
+class Configuration extends Component
 {
     const CONNECTION_CLASS = '\PhpAmqpLib\Connection\AMQPLazyConnection';
 
-    public $logger = [];
+    public $autoDeclare = true;
     public $connections = [];
     public $producers = [];
     public $consumers = [];
-    public $multipleConsumers = [];
-    private $isLoaded = false;
+    public $queues = [];
+    public $exchanges = [];
+    public $bindings = [];
+    public $logger = [];
 
     /**
-     * Register all required services to service container
-     * @inheritdoc
-     */
-    public function bootstrap($app)
-    {
-        if ($this->isAlreadyLoaded()) {
-            return;
-        }
-        $this->loadConnections();
-        $this->loadProducers();
-        $this->loadConsumers();
-        $this->loadMultipleConsumers();
-        $this->isLoaded = true;
-    }
-
-    /**
-     * Set connections to service container
-     */
-    protected function loadConnections()
-    {
-        foreach ($this->connections as $key => $parameters) {
-            $serviceAlias = sprintf(BaseRabbitMQ::CONNECTION_SERVICE_NAME, $key);
-            \Yii::$container->set($serviceAlias, function () use ($parameters) {
-                $factory = new AbstractConnectionFactory(self::CONNECTION_CLASS, $parameters);
-                return $factory->createConnection();
-            });
-        }
-    }
-
-    /**
-     * Set producers to service container
-     */
-    protected function loadProducers()
-    {
-        foreach ($this->producers as $key => $parameters) {
-            $serviceAlias = sprintf(BaseRabbitMQ::PRODUCER_SERVICE_NAME, $key);
-            \Yii::$container->set($serviceAlias, function () use ($key, $parameters) {
-                if (!isset($parameters['connection'])) {
-                    throw new InvalidConfigException("Please provide `connection` option for producer `{$key}`.");
-                }
-                $connection = \Yii::$container->get(sprintf('rabbit_mq.connection.%s', $parameters['connection']));
-                $producer = new Producer($connection);
-
-                //this producer doesn't define an exchange -> using AMQP Default
-                if (!isset($parameters['exchange_options'])) {
-                    $parameters['exchange_options'] = [];
-                }
-                \Yii::$container->invoke([$producer, 'setExchangeOptions'], [$parameters['exchange_options']]);
-
-                //this producer doesn't define a queue -> using AMQP Default
-                if (!isset($parameters['queue_options'])) {
-                    $parameters['queue_options'] = [];
-                }
-                \Yii::$container->invoke([$producer, 'setQueueOptions'], [$parameters['queue_options']]);
-
-                if (isset($parameters['auto_setup_fabric']) && !$parameters['auto_setup_fabric']) {
-                    \Yii::$container->invoke([$producer, 'disableAutoSetupFabric']);
-                }
-
-                $this->logger = array_replace($this->getDefaultLoggerOptions(), $this->logger);
-                \Yii::$container->invoke([$producer, 'setLogger'], [$this->logger]);
-
-                return $producer;
-            });
-        }
-    }
-
-    /**
-     * Set consumers(one instance per queue) to service container
-     */
-    protected function loadConsumers()
-    {
-        foreach ($this->consumers as $key => $parameters) {
-            $serviceAlias = sprintf(BaseRabbitMQ::CONSUMER_SERVICE_NAME, $key);
-            \Yii::$container->set($serviceAlias, function () use ($key, $parameters) {
-                if (!isset($parameters['connection'])) {
-                    throw new InvalidConfigException("Please provide `connection` option for consumer `{$key}`.");
-                }
-                $connection = \Yii::$container->get(sprintf('rabbit_mq.connection.%s', $parameters['connection']));
-                $consumer = new Consumer($connection);
-
-                // if consumer doesn't define an exchange -> using AMQP Default
-                if (!isset($parameters['exchange_options'])) {
-                    $parameters['exchange_options'] = [];
-                }
-                \Yii::$container->invoke([$consumer, 'setExchangeOptions'], [$parameters['exchange_options']]);
-
-                // if consumer doesn't define a queue -> using AMQP Default
-                if (!isset($parameters['queue_options'])) {
-                    $parameters['queue_options'] = [];
-                }
-                \Yii::$container->invoke([$consumer, 'setQueueOptions'], [$parameters['queue_options']]);
-
-                if (!isset($parameters['callback'])) {
-                    throw new InvalidConfigException("Callback not configured for `{$key}`` queue consumer.");
-                }
-                $callbackClass = $this->getCallbackClass($parameters['callback']);
-                \Yii::$container->invoke([$consumer, 'setCallback'], [[$callbackClass, 'execute']]);
-                if (isset($parameters['qos_options'])) {
-                    \Yii::$container->invoke([$consumer, 'setQosOptions'], [
-                        $parameters['qos_options']['prefetch_size'],
-                        $parameters['qos_options']['prefetch_count'],
-                        $parameters['qos_options']['global'],
-                    ]);
-                }
-
-                if (isset($parameters['auto_setup_fabric']) && !$parameters['auto_setup_fabric']) {
-                    \Yii::$container->invoke([$consumer, 'disableAutoSetupFabric']);
-                }
-
-                if (isset($parameters['idle_timeout'])) {
-                    \Yii::$container->invoke('setIdleTimeout', [$parameters['idle_timeout']]);
-                }
-                if (isset($parameters['idle_timeout_exit_code'])) {
-                    \Yii::$container->invoke('setIdleTimeoutExitCode', [$parameters['idle_timeout_exit_code']]);
-                }
-
-                $this->logger = array_replace($this->getDefaultLoggerOptions(), $this->logger);
-                \Yii::$container->invoke([$consumer, 'setLogger'], [$this->logger]);
-
-                return $consumer;
-            });
-        }
-    }
-
-    /**
-     * Set consumers(one instance per multiple queues) to service container
-     */
-    protected function loadMultipleConsumers()
-    {
-        foreach ($this->multipleConsumers as $key => $parameters) {
-            $serviceAlias = sprintf(BaseRabbitMQ::MULTIPLE_CONSUMER_SERVICE_NAME, $key);
-            \Yii::$container->set($serviceAlias, function () use ($key, $parameters) {
-                $queues = [];
-
-                if (!isset($parameters['connection'])) {
-                    throw new InvalidConfigException("Please provide `connection` option for consumer `{$key}`.");
-                }
-                $connection = \Yii::$container->get(sprintf('rabbit_mq.connection.%s', $parameters['connection']));
-                $multipleConsumer = new MultipleConsumer($connection);
-
-                // if consumer doesn't define an exchange -> using AMQP Default
-                if (!isset($parameters['exchange_options'])) {
-                    $parameters['exchange_options'] = [];
-                }
-                \Yii::$container->invoke([$multipleConsumer, 'setExchangeOptions'], [$parameters['exchange_options']]);
-
-                if (empty($parameters['queues'])) {
-                    throw new InvalidConfigException(
-                        "Error on loading {$key} multiple consumer. 'queues' parameter should be defined."
-                    );
-                }
-                foreach ($parameters['queues'] as $queueName => $queueOptions) {
-                    // Rearrange array for consistency
-                    $queues[$queueOptions['name']] = $queueOptions;
-                    if (!isset($queueOptions['callback'])) {
-                        throw new InvalidConfigException("Callback not configured for `{$queueName}`` queue consumer.");
-                    }
-                    $callbackClass = $this->getCallbackClass($queueOptions['callback']);
-                    $queues[$queueOptions['name']]['callback'] = [$callbackClass, 'execute'];
-                }
-                \Yii::$container->invoke([$multipleConsumer, 'setQueues'], [$queues]);
-
-                if (isset($parameters['qos_options'])) {
-                    \Yii::$container->invoke([$multipleConsumer, 'setQosOptions'], [
-                        $parameters['qos_options']['prefetch_size'],
-                        $parameters['qos_options']['prefetch_count'],
-                        $parameters['qos_options']['global'],
-                    ]);
-                }
-
-                if (isset($parameters['idle_timeout'])) {
-                    \Yii::$container->invoke([$multipleConsumer, 'setIdleTimeout'], [
-                        $parameters['idle_timeout'],
-                    ]);
-                }
-
-                if (isset($parameters['idle_timeout_exit_code'])) {
-                    \Yii::$container->invoke([$multipleConsumer, 'setIdleTimeoutExitCode'], [
-                        $parameters['idle_timeout_exit_code'],
-                    ]);
-                }
-
-                if (isset($parameters['auto_setup_fabric']) && !$parameters['auto_setup_fabric']) {
-                    \Yii::$container->invoke([$multipleConsumer, 'disableAutoSetupFabric']);
-                }
-
-                $this->logger = array_replace($this->getDefaultLoggerOptions(), $this->logger);
-                \Yii::$container->invoke([$multipleConsumer, 'setLogger'], [$this->logger]);
-
-                return $multipleConsumer;
-            });
-        }
-    }
-
-    /**
-     * Get default logger options
-     *
+     * Extension configuration default values
      * @return array
      */
-    protected function getDefaultLoggerOptions()
+    protected function getDefaults() : array
     {
         return [
-            'enable' => true,
-            'category' => 'application',
-            'print_console' => false,
-            'system_memory' => false,
+            'autoDeclare' => true,
+            'connections' => [
+                'url' => '',
+                'host' => 'localhost',
+                'port' => 5672,
+                'user' => 'guest',
+                'password' => 'guest',
+                'vhost' => '/',
+                'connection_timeout' => 3,
+                'read_write_timeout' => 3,
+                'ssl_context' => null,
+                'keepalive' => false,
+                'heartbeat' => 0,
+            ],
+            'exchanges' => [
+                'name' => '',
+                'type' => '',
+                'passive' => false,
+                'durable' => false,
+                'auto_delete' => true,
+                'internal' => false,
+                'nowait' => false,
+                'arguments' => null,
+                'ticket' => null,
+                'declare' => true,
+            ],
+            'queues' => [
+                'name' => '',
+                'passive' => false,
+                'durable' => false,
+                'exclusive' => false,
+                'auto_delete' => true,
+                'nowait' => false,
+                'arguments' => null,
+                'ticket' => null,
+                'declare' => true,
+            ],
+            'bindings' => [
+                'exchange' => '',
+                'queue' => null,
+                'toExchange' => null,
+                'routingKey' => '',
+            ],
+            'producers' => [
+                'connection' => '',
+                'exchanges' => [],
+                'serializer' => function () {},
+            ],
+            'consumers' => [
+                'connection' => '',
+                'queues' => [],
+                'callbacks' => [],
+                'qos' => [
+                    'prefetch_size' => 0,
+                    'prefetch_count' => 0,
+                    'global' => false,
+                ],
+                'idle_timeout' => null,
+                'idle_timeout_exit_code' => null,
+                'unserializer' => function () {},
+            ],
+            'logger' => [
+                'enable' => true,
+                'category' => 'application',
+                'print_console' => false,
+                'system_memory' => false,
+            ],
         ];
     }
 
     /**
-     * @return bool
+     * Configuration auto-loading
+     * @param Application $app
+     * @throws InvalidConfigException
      */
-    private function isAlreadyLoaded()
+    public function bootstrap($app)
     {
-        return $this->isLoaded;
+        $this->logger = $this->logger;
+    }
+    /**
+     * Config validation
+     * @param array $passed
+     */
+    protected function validate(array $passed)
+    {
+        $this->validateTopLevel($passed);
+        $this->validateMultidimensional($passed);
+        die();
     }
 
     /**
-     * @param $callbackName
-     * @return object
+     * Validate multidimensional entries names
+     * @param array $passed
      * @throws InvalidConfigException
      */
-    private function getCallbackClass($callbackName)
+    protected function validateMultidimensional(array $passed)
     {
-        if (!is_string($callbackName)) {
-            throw new InvalidConfigException("Consumer `callback` parameter value should be a class name or service name in DI container.");
+        $multidimensional = [
+            'connection' => $passed['connections'],
+            'exchange' => $passed['exchanges'],
+            'queue' => $passed['queues'],
+            'binding' => $passed['bindings'],
+            'producer' => $passed['producers'],
+            'consumer' => $passed['consumers'],
+        ];
+
+        foreach ($multidimensional as $configName => $configItem) {
+            foreach ($configItem as $key => $value) {
+                if (!is_int($key)) {
+                    throw new InvalidConfigException("Invalid {$configName} key: `{$key}`. The array should be numeric.");
+                }
+            }
         }
-        if (!class_exists($callbackName)) {
-            $callbackClass = \Yii::$container->get($callbackName);
-        } else {
-            $callbackClass = new $callbackName();
+    }
+
+    /**
+     * Validate config entry value
+     * @param array $passed
+     * @param string $key
+     * @throws InvalidConfigException
+     */
+    protected function validateArray(array $passed, string $key)
+    {
+        $required = $this->getDefaults()[$key];
+        $undeclaredFields = array_diff_key($passed, $required);
+        if (!empty($undeclaredFields)) {
+            $asString = json_encode($undeclaredFields);
+            throw new InvalidConfigException("Unknown options: {$asString}");
         }
-        if (!($callbackClass instanceof ConsumerInterface)) {
-            throw new InvalidConfigException("{$callbackName} should implement ConsumerInterface.");
+    }
+
+    protected function validateTopLevel($config)
+    {
+        if (!is_bool($config['autoDeclare'])) {
+            throw new InvalidConfigException("Option `autoDeclare` should be of type boolean.");
         }
 
-        return $callbackClass;
+        if (!is_array($config['logger'])) {
+            throw new InvalidConfigException("Option `logger` should be of type array.");
+        }
+
+        $this->validateArray($config['logger'], 'logger');
     }
 }

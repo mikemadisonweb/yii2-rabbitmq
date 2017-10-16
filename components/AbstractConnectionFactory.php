@@ -8,19 +8,7 @@ class AbstractConnectionFactory
     private $_class;
 
     /** @var array */
-    private $_parameters = [
-        'url'                => '',
-        'host'               => 'localhost',
-        'port'               => 5672,
-        'user'               => 'guest',
-        'password'           => 'guest',
-        'vhost'              => '/',
-        'connection_timeout' => 3,
-        'read_write_timeout' => 3,
-        'ssl_context'        => null,
-        'keepalive'          => false,
-        'heartbeat'          => 0,
-    ];
+    private $_parameters;
 
     /**
      * Constructor
@@ -31,8 +19,7 @@ class AbstractConnectionFactory
     public function __construct($class, array $parameters)
     {
         $this->_class = $class;
-        $this->_parameters = array_merge($this->_parameters, $parameters);
-        $this->_parameters = $this->parseUrl($this->_parameters);
+        $this->_parameters = $this->parseUrl($parameters);
     }
 
     /**

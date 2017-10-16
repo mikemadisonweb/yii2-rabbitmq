@@ -1,8 +1,7 @@
 <?php
 
-namespace mikemadisonweb\rabbitmq\components;
+namespace mikemadisonweb\rabbitmq\events;
 
-use PhpAmqpLib\Message\AMQPMessage;
 use yii\base\Event;
 
 class RabbitMQPublisherEvent extends Event
