@@ -55,8 +55,8 @@ class Producer extends BaseRabbitMQ implements ProducerInterface
      */
     public function publish($msgBody, $routingKey = '', $additionalProperties = [], array $headers = null)
     {
-        if ($this->autoSetupFabric) {
-            $this->setupFabric();
+        if ($this->autoDeclare) {
+            $this->declare();
         }
         if (is_array($msgBody)) {
             $msgBody = serialize($msgBody);

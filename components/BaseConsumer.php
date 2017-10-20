@@ -122,7 +122,7 @@ abstract class BaseConsumer extends BaseRabbitMQ
 
     protected function startConsuming()
     {
-        if ($this->autoSetupFabric) {
+        if ($this->autoDeclare) {
             $this->setupFabric();
         }
 

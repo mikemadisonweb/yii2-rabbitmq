@@ -2,11 +2,10 @@
 
 namespace mikemadisonweb\rabbitmq\tests;
 
-use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 use Yii;
 use yii\helpers\ArrayHelper;
 
-abstract class TestCase extends PHPUnitTestCase
+abstract class TestCase extends \PHPUnit\Framework\TestCase
 {
     public static $params;
 
@@ -20,19 +19,6 @@ abstract class TestCase extends PHPUnitTestCase
         $logger->flush();
     }
 
-    /**
-     * Returns a test configuration param from /data/config.php.
-     * @param  string $name params name
-     * @param  mixed $default default value to use when param is not set.
-     * @return mixed  the value of the configuration param
-     */
-    public static function getParam($name, $default = null)
-    {
-        if (static::$params === null) {
-            static::$params = require __DIR__ . '/data/config.php';
-        }
-        return isset(static::$params[$name]) ? static::$params[$name] : $default;
-    }
     /**
      * Clean up after test.
      * By default the application created with [[mockApplication]] will be destroyed.
@@ -58,30 +44,11 @@ abstract class TestCase extends PHPUnitTestCase
         ], $config));
     }
 
-    protected function mockWebApplication($config = [], $appClass = '\yii\web\Application')
-    {
-        new $appClass(ArrayHelper::merge([
-            'id' => 'testapp',
-            'basePath' => __DIR__,
-            'vendorPath' => $this->getVendorPath(),
-            'aliases' => [
-                '@bower' => '@vendor/bower-asset',
-                '@npm' => '@vendor/npm-asset',
-            ],
-            'components' => [
-                'request' => [
-                    'cookieValidationKey' => 'wefJDF8sfdsfSDefwqdxj9oq',
-                    'scriptFile' => __DIR__ . '/index.php',
-                    'scriptUrl' => '/index.php',
-                ],
-            ],
-        ], $config));
-    }
     protected function getVendorPath()
     {
-        $vendor = dirname(dirname(__DIR__)) . '/vendor';
+        $vendor = dirname(__DIR__, 2) . '/vendor';
         if (!is_dir($vendor)) {
-            $vendor = dirname(dirname(dirname(dirname(__DIR__))));
+            $vendor = dirname(__DIR__, 4);
         }
         return $vendor;
     }
@@ -95,18 +62,6 @@ abstract class TestCase extends PHPUnitTestCase
             \Yii::$app->session->close();
         }
         \Yii::$app = null;
-    }
-
-    /**
-     * Asserting two strings equality ignoring line endings.
-     * @param string $expected
-     * @param string $actual
-     */
-    protected function assertEqualsWithoutLE($expected, $actual)
-    {
-        $expected = str_replace("\r\n", "\n", $expected);
-        $actual = str_replace("\r\n", "\n", $actual);
-        $this->assertEquals($expected, $actual);
     }
 
     /**

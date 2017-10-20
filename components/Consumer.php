@@ -27,7 +27,7 @@ class Consumer extends BaseConsumer
 
     protected function startConsuming()
     {
-        if ($this->autoSetupFabric) {
+        if ($this->autoDeclare) {
             $this->setupFabric();
         }
         foreach ($this->queues as $name => $options) {
