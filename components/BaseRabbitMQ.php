@@ -22,11 +22,6 @@ abstract class BaseRabbitMQ
 
     protected $routingKey = '';
 
-    protected $basicProperties = [
-        'content_type'  => 'text/plain',
-        'delivery_mode' => 2,
-    ];
-
     /**
      * @param AbstractConnection $conn
      */

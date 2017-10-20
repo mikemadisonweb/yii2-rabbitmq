@@ -5,10 +5,10 @@ namespace mikemadisonweb\rabbitmq;
 use mikemadisonweb\rabbitmq\components\{
     AbstractConnectionFactory, Consumer, ConsumerInterface, Producer, Routing
 };
+use mikemadisonweb\rabbitmq\exceptions\InvalidConfigException;
 use PhpAmqpLib\Connection\AbstractConnection;
 use yii\base\Application;
 use yii\base\BootstrapInterface;
-use yii\base\InvalidConfigException;
 
 class DependencyInjection implements BootstrapInterface
 {
@@ -22,7 +22,6 @@ class DependencyInjection implements BootstrapInterface
         $config = $app->rabbitmq->getConfig();
         $this->registerConnections($config);
         $this->registerRouting($config);
-        $c = \Yii::$container;
         $this->registerProducers($config);
         $this->registerConsumers($config);
     }
@@ -35,7 +34,7 @@ class DependencyInjection implements BootstrapInterface
     {
         foreach ($config->connections as $options) {
             $serviceAlias = sprintf(Configuration::CONNECTION_SERVICE_NAME, $options['name']);
-            \Yii::$container->set($serviceAlias, function () use ($options) {
+            \Yii::$container->setSingleton($serviceAlias, function () use ($options) {
                 $factory = new AbstractConnectionFactory($options['type'], $options);
                 return $factory->createConnection();
             });
@@ -48,9 +47,13 @@ class DependencyInjection implements BootstrapInterface
      */
     protected function registerRouting(Configuration $config)
     {
-        \Yii::$container->set(Configuration::ROUTING_SERVICE_NAME, function () use ($config) {
-            $factory = new Routing($options['type'], $options);
-            return $factory->createConnection();
+        \Yii::$container->setSingleton(Configuration::ROUTING_SERVICE_NAME, function () use ($config) {
+            $routing = new Routing();
+            \Yii::$container->invoke([$routing, 'setQueues'], [$config->queues]);
+            \Yii::$container->invoke([$routing, 'setExchanges'], [$config->exchanges]);
+            \Yii::$container->invoke([$routing, 'setBindings'], [$config->bindings]);
+
+            return $routing;
         });
     }
 
@@ -64,12 +67,14 @@ class DependencyInjection implements BootstrapInterface
         $logger = $config->logger;
         foreach ($config->producers as $options) {
             $serviceAlias = sprintf(Configuration::PRODUCER_SERVICE_NAME, $options['name']);
-            \Yii::$container->set($serviceAlias, function () use ($options, $autoDeclare, $logger) {
+            \Yii::$container->setSingleton($serviceAlias, function () use ($options, $autoDeclare, $logger) {
                 /**
                  * @var $connection AbstractConnection
                  */
                 $connection = \Yii::$container->get(sprintf(Configuration::CONNECTION_SERVICE_NAME, $options['connection']));
                 $producer = new Producer($connection, $autoDeclare);
+                \Yii::$container->invoke([$producer, 'setContentType'], [$options['contentType']]);
+                \Yii::$container->invoke([$producer, 'setDeliveryMode'], [$options['deliveryMode']]);
                 \Yii::$container->invoke([$producer, 'setLogger'], [$logger]);
 
                 return $producer;
@@ -87,22 +92,18 @@ class DependencyInjection implements BootstrapInterface
         $logger = $config->logger;
         foreach ($config->consumers as $options) {
             $serviceAlias = sprintf(Configuration::CONSUMER_SERVICE_NAME, $options['name']);
-            \Yii::$container->set($serviceAlias, function () use ($options, $autoDeclare, $logger) {
+            \Yii::$container->setSingleton($serviceAlias, function () use ($options, $autoDeclare, $logger) {
                 /**
                  * @var $connection AbstractConnection
                  */
                 $connection = \Yii::$container->get(sprintf(Configuration::CONNECTION_SERVICE_NAME, $options['connection']));
                 $consumer = new Consumer($connection, $autoDeclare);
-
                 $queues = [];
-                foreach ($options['queues'] as $queueName => $queueOptions) {
-                    // Rearrange array for consistency
-                    $queues[$queueOptions['name']] = $queueOptions;
-                    $callbackClass = $this->getCallbackClass($queueOptions['callback']);
-                    $queues[$queueOptions['name']]['callback'] = [$callbackClass, 'execute'];
+                foreach ($options['callbacks'] as $queueName => $callback) {
+                    $callbackClass = $this->getCallbackClass($callback);
+                    $queues[$queueName] = [$callbackClass, 'execute'];
                 }
                 \Yii::$container->invoke([$consumer, 'setQueues'], [$queues]);
-
                 if (isset($options['qos_options'])) {
                     \Yii::$container->invoke([$consumer, 'setQosOptions'], [
                         $options['qos_options']['prefetch_size'],
@@ -110,19 +111,16 @@ class DependencyInjection implements BootstrapInterface
                         $options['qos_options']['global'],
                     ]);
                 }
-
                 if (isset($options['idle_timeout'])) {
                     \Yii::$container->invoke([$consumer, 'setIdleTimeout'], [
                         $options['idle_timeout'],
                     ]);
                 }
-
                 if (isset($options['idle_timeout_exit_code'])) {
                     \Yii::$container->invoke([$consumer, 'setIdleTimeoutExitCode'], [
                         $options['idle_timeout_exit_code'],
                     ]);
                 }
-
                 \Yii::$container->invoke([$consumer, 'setLogger'], [$logger]);
 
                 return $consumer;
@@ -132,13 +130,13 @@ class DependencyInjection implements BootstrapInterface
 
     /**
      * @param string $callbackName
-     * @return object
+     * @return ConsumerInterface
      * @throws InvalidConfigException
      */
     private function getCallbackClass(string $callbackName)
     {
         if (!is_string($callbackName)) {
-            throw new InvalidConfigException("Consumer `callback` parameter value should be a class name or service name in DI container.");
+            throw new InvalidConfigException('Consumer `callback` parameter value should be a class name or service name in DI container.');
         }
         if (!class_exists($callbackName)) {
             $callbackClass = \Yii::$container->get($callbackName);

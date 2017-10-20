@@ -16,6 +16,30 @@ class Routing
     private $isDeclared = false;
 
     /**
+     * @param array $queues
+     */
+    public function setQueues(array $queues)
+    {
+        $this->queues = $this->arrangeByName($queues);
+    }
+
+    /**
+     * @param array $exchanges
+     */
+    public function setExchanges(array $exchanges)
+    {
+        $this->exchanges = $this->arrangeByName($exchanges);
+    }
+
+    /**
+     * @param array $bindings
+     */
+    public function setBindings(array $bindings)
+    {
+        $this->bindings = $bindings;
+    }
+
+    /**
      * @param AbstractConnection $conn
      * @throws \RuntimeException
      */
@@ -38,7 +62,7 @@ class Routing
      * @param $queueName
      * @throws \RuntimeException
      */
-    public function declareQueue(AbstractConnection $conn, $queueName)
+    public function declareQueue(AbstractConnection $conn, string $queueName)
     {
         if(!isset($this->queues[$queueName])) {
             throw new \RuntimeException("Queue `{$queueName}` is not configured.");
@@ -138,7 +162,7 @@ class Routing
      * @param $exchangeName
      * @throws \RuntimeException
      */
-    public function declareExchange(AbstractConnection $conn, $exchangeName)
+    public function declareExchange(AbstractConnection $conn, string $exchangeName)
     {
         if(!isset($this->exchanges[$exchangeName])) {
             throw new \RuntimeException("Exchange `{$exchangeName}` is not configured.");
@@ -158,30 +182,6 @@ class Routing
             );
             $this->exchangesDeclared[$exchangeName] = true;
         }
-    }
-
-    /**
-     * @param array $queues
-     */
-    protected function setQueues(array $queues)
-    {
-        $this->queues = $this->arrangeByName($queues);
-    }
-
-    /**
-     * @param array $exchanges
-     */
-    protected function setExchanges(array $exchanges)
-    {
-        $this->exchanges = $this->arrangeByName($exchanges);
-    }
-
-    /**
-     * @param array $bindings
-     */
-    protected function setBindings(array $bindings)
-    {
-        $this->exchanges = $bindings;
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace mikemadisonweb\rabbitmq\components;
 
+use mikemadisonweb\rabbitmq\Configuration;
 use mikemadisonweb\rabbitmq\events\RabbitMQPublisherEvent;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
@@ -11,27 +12,32 @@ use PhpAmqpLib\Wire\AMQPTable;
  */
 class Producer extends BaseRabbitMQ implements ProducerInterface
 {
-    protected $contentType = 'text/plain';
-    protected $deliveryMode = 2;
+    protected $contentType;
+    protected $deliveryMode;
+    protected $serializer;
 
     /**
      * @param $contentType
-     * @return $this
      */
     public function setContentType($contentType)
     {
         $this->contentType = $contentType;
-        return $this;
     }
 
     /**
      * @param $deliveryMode
-     * @return $this
      */
     public function setDeliveryMode($deliveryMode)
     {
         $this->deliveryMode = $deliveryMode;
-        return $this;
+    }
+
+    /**
+     * @param callable $serializer
+     */
+    public function setSerializer(callable $serializer)
+    {
+        $this->serializer = $serializer;
     }
 
     /**
@@ -48,23 +54,21 @@ class Producer extends BaseRabbitMQ implements ProducerInterface
     /**
      * Publishes the message and merges additional properties with basic properties
      *
-     * @param string $msgBody
+     * @param mixed $msgBody
+     * @param string $exchangeName
      * @param string $routingKey
-     * @param array $additionalProperties
      * @param array $headers
      */
-    public function publish($msgBody, $routingKey = '', $additionalProperties = [], array $headers = null)
+    public function publish($msgBody, string $exchangeName, string $routingKey = '', array $headers = null)
     {
         if ($this->autoDeclare) {
-            $this->declare();
-        }
-        if (is_array($msgBody)) {
-            $msgBody = serialize($msgBody);
+            $routing = \Yii::$container->get(Configuration::ROUTING_SERVICE_NAME);
+            $routing->declareAll($this->conn);
         }
         if (!is_string($msgBody)) {
-            $msgBody = (string)$msgBody;
+            $msgBody = call_user_func($this->serializer, $msgBody);
         }
-        $msg = new AMQPMessage($msgBody, array_merge($this->getBasicProperties(), $additionalProperties));
+        $msg = new AMQPMessage($msgBody, $this->getBasicProperties());
         if (!empty($headers)) {
             $headersTable = new AMQPTable($headers);
             $msg->set('application_headers', $headersTable);
@@ -75,7 +79,12 @@ class Producer extends BaseRabbitMQ implements ProducerInterface
             'producer' => $this,
         ]));
 
-        $this->getChannel()->basic_publish($msg, $this->exchangeOptions['name'], (string)$routingKey);
+        $this->getChannel()->basic_publish($msg, $exchangeName, $routingKey);
+
+        \Yii::$app->rabbitmq->trigger(RabbitMQPublisherEvent::AFTER_PUBLISH, new RabbitMQPublisherEvent([
+            'message' => $msg,
+            'producer' => $this,
+        ]));
 
         if ($this->logger['enable']) {
             \Yii::info([
@@ -83,15 +92,9 @@ class Producer extends BaseRabbitMQ implements ProducerInterface
                 'amqp' => [
                     'body' => $msg->getBody(),
                     'routing_keys' => $routingKey,
-                    'properties' => array_intersect_key($msg->get_properties(), $additionalProperties),
                     'headers' => $msg->has('application_headers') ? $msg->get('application_headers')->getNativeData() : $headers,
                 ],
             ], $this->logger['category']);
         }
-
-        \Yii::$app->rabbitmq->trigger(RabbitMQPublisherEvent::AFTER_PUBLISH, new RabbitMQPublisherEvent([
-            'message' => $msg,
-            'producer' => $this,
-        ]));
     }
 }

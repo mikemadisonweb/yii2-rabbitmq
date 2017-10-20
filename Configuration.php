@@ -43,8 +43,8 @@ class Configuration extends Component
                 'name' => null,
                 'type' => null,
                 'passive' => false,
-                'durable' => false,
-                'auto_delete' => true,
+                'durable' => true,
+                'auto_delete' => false,
                 'internal' => false,
                 'nowait' => false,
                 'arguments' => null,
@@ -56,9 +56,9 @@ class Configuration extends Component
             [
                 'name' => '',
                 'passive' => false,
-                'durable' => false,
+                'durable' => true,
                 'exclusive' => false,
-                'auto_delete' => true,
+                'auto_delete' => false,
                 'nowait' => false,
                 'arguments' => null,
                 'ticket' => null,
@@ -77,6 +77,8 @@ class Configuration extends Component
             [
                 'name' => null,
                 'connection' => 'default',
+                'contentType' => 'text/plain',
+                'deliveryMode' => 2,
                 'serializer' => 'json_encode',
             ],
         ],
@@ -176,7 +178,7 @@ class Configuration extends Component
      */
     protected function validateTopLevel()
     {
-        if (!is_bool($this->autoDeclare)) {
+        if (($this->autoDeclare !== null) && !is_bool($this->autoDeclare)) {
             throw new InvalidConfigException("Option `autoDeclare` should be of type boolean.");
         }
 
