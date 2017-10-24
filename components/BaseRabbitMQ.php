@@ -9,25 +9,25 @@ use yii\helpers\Console;
 abstract class BaseRabbitMQ
 {
     protected $conn;
-
     protected $autoDeclare;
-
     protected $ch;
-
     protected $logger;
 
-    protected $exchangeDeclared = false;
-
-    protected $queueDeclared = false;
-
-    protected $routingKey = '';
+    /**
+     * @var $routing Routing
+     */
+    protected $routing;
 
     /**
      * @param AbstractConnection $conn
+     * @param Routing $routing
+     * @param Logger $logger
+     * @param bool $autoDeclare
      */
-    public function __construct(AbstractConnection $conn, bool $autoDeclare)
+    public function __construct(AbstractConnection $conn, Routing $routing, Logger $logger, bool $autoDeclare)
     {
         $this->conn = $conn;
+        $this->routing = $routing;
         $this->autoDeclare = $autoDeclare;
         if ($conn->connectOnConstruct()) {
             $this->getChannel();
@@ -100,20 +100,5 @@ abstract class BaseRabbitMQ
     public function setLogger(array $logger)
     {
         $this->logger = $logger;
-    }
-
-    /**
-     * Print message to console
-     * @param $message
-     * @param $color
-     * @return bool|int
-     */
-    public function stdout($message, $color = Console::FG_YELLOW)
-    {
-        if (Console::streamSupportsAnsiColors(\STDOUT)) {
-            $message = Console::ansiFormat($message, [$color]) . "\n";
-        }
-
-        return Console::stdout($message);
     }
 }

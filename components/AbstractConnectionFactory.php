@@ -2,6 +2,8 @@
 
 namespace mikemadisonweb\rabbitmq\components;
 
+use PhpAmqpLib\Connection\AbstractConnection;
+
 class AbstractConnectionFactory
 {
     /** @var \ReflectionClass */
@@ -25,7 +27,7 @@ class AbstractConnectionFactory
     /**
      * @return mixed
      */
-    public function createConnection()
+    public function createConnection() : AbstractConnection
     {
         return new $this->_class(
             $this->_parameters['host'],

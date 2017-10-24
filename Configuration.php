@@ -2,6 +2,9 @@
 
 namespace mikemadisonweb\rabbitmq;
 
+use mikemadisonweb\rabbitmq\components\Consumer;
+use mikemadisonweb\rabbitmq\components\Producer;
+use mikemadisonweb\rabbitmq\components\Routing;
 use mikemadisonweb\rabbitmq\exceptions\InvalidConfigException;
 use PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Connection\AMQPLazyConnection;
@@ -14,16 +17,18 @@ class Configuration extends Component
     const CONSUMER_SERVICE_NAME = 'rabbit_mq.consumer.%s';
     const PRODUCER_SERVICE_NAME = 'rabbit_mq.producer.%s';
     const ROUTING_SERVICE_NAME = 'rabbit_mq.routing';
+    const LOGGER_SERVICE_NAME = 'rabbit_mq.logger';
 
+    const DEFAULT_CONNECTION_NAME = 'default';
     /**
      * Extension configuration default values
      * @var array
      */
     const DEFAULTS = [
-        'autoDeclare' => true,
+        'auto_declare' => true,
         'connections' => [
             [
-                'name' => 'default',
+                'name' => self::DEFAULT_CONNECTION_NAME,
                 'type' => AMQPLazyConnection::class,
                 'url' => null,
                 'host' => null,
@@ -76,16 +81,16 @@ class Configuration extends Component
         'producers' => [
             [
                 'name' => null,
-                'connection' => 'default',
-                'contentType' => 'text/plain',
-                'deliveryMode' => 2,
+                'connection' => self::DEFAULT_CONNECTION_NAME,
+                'content_type' => 'text/plain',
+                'delivery_mode' => 2,
                 'serializer' => 'json_encode',
             ],
         ],
         'consumers' => [
             [
                 'name' => null,
-                'connection' => 'default',
+                'connection' => self::DEFAULT_CONNECTION_NAME,
                 'callbacks' => [],
                 'qos' => [
                     'prefetch_size' => 0,
@@ -131,6 +136,49 @@ class Configuration extends Component
         }
 
         return $this;
+    }
+
+    /**
+     * Get connection service
+     * @param string $connectionName
+     * @return AbstractConnection
+     */
+    public function getConnection(string $connectionName = '') : AbstractConnection
+    {
+        if ('' === $connectionName) {
+            $connectionName = self::DEFAULT_CONNECTION_NAME;
+        }
+
+        return \Yii::$container->get(sprintf(self::CONNECTION_SERVICE_NAME, $connectionName));
+    }
+
+    /**
+     * Get producer service
+     * @param string $producerName
+     * @return Producer
+     */
+    public function getProducer(string $producerName) : Producer
+    {
+        return \Yii::$container->get(sprintf(self::PRODUCER_SERVICE_NAME, $producerName));
+    }
+
+    /**
+     * Get consumer service
+     * @param string $consumerName
+     * @return Consumer
+     */
+    public function getConsumer(string $consumerName) : Consumer
+    {
+        return \Yii::$container->get(sprintf(self::CONSUMER_SERVICE_NAME, $consumerName));
+    }
+
+    /**
+     * Get routing service
+     * @return Routing
+     */
+    public function getRouting() : Routing
+    {
+        return \Yii::$container->get(self::ROUTING_SERVICE_NAME);
     }
 
     /**
@@ -255,7 +303,7 @@ class Configuration extends Component
             if (isset($producer['connection']) && !$this->isNameExist($this->connections, $producer['connection'])) {
                 throw new InvalidConfigException("Connection `{$producer['connection']}` defined in producer doesn't configured in connections.");
             }
-            if (!isset($producer['connection']) && !$this->isNameExist($this->connections, 'default')) {
+            if (!isset($producer['connection']) && !$this->isNameExist($this->connections, self::DEFAULT_CONNECTION_NAME)) {
                 throw new InvalidConfigException("Connection for producer `{$producer['name']}` is required.");
             }
             if (isset($producer['serializer']) && !is_callable($producer['serializer'])) {
@@ -270,7 +318,7 @@ class Configuration extends Component
             if (isset($consumer['connection']) && !$this->isNameExist($this->connections, $consumer['connection'])) {
                 throw new InvalidConfigException("Connection `{$consumer['connection']}` defined in consumer doesn't configured in connections.");
             }
-            if (!isset($consumer['connection']) && !$this->isNameExist($this->connections, 'default')) {
+            if (!isset($consumer['connection']) && !$this->isNameExist($this->connections, self::DEFAULT_CONNECTION_NAME)) {
                 throw new InvalidConfigException("Connection for consumer `{$consumer['name']}` is required.");
             }
             if (!isset($consumer['callbacks']) || empty($consumer['callbacks'])) {
@@ -337,7 +385,7 @@ class Configuration extends Component
         }
         if (count($this->connections) === 1) {
             if (!isset($this->connections[0]['name'])) {
-                $this->connections[0]['name'] = 'default';
+                $this->connections[0]['name'] = self::DEFAULT_CONNECTION_NAME;
             }
         }
     }
@@ -348,7 +396,7 @@ class Configuration extends Component
     protected function completeWithDefaults()
     {
         $defaults = self::DEFAULTS;
-        if (!isset($this->autoDeclare)) {
+        if (null === $this->autoDeclare) {
             $this->autoDeclare = $defaults['autoDeclare'];
         }
         if (empty($this->logger)) {

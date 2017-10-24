@@ -13,6 +13,7 @@ nbproject
 Thumbs.db
 
 # composer vendor dir
-/vendor
+/mikemadisonweb/vendor
 
 composer.lock
+vendor

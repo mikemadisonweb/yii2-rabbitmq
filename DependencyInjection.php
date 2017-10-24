@@ -3,8 +3,9 @@
 namespace mikemadisonweb\rabbitmq;
 
 use mikemadisonweb\rabbitmq\components\{
-    AbstractConnectionFactory, Consumer, ConsumerInterface, Producer, Routing
+    AbstractConnectionFactory, Consumer, ConsumerInterface, Logger, Producer, Routing
 };
+use mikemadisonweb\rabbitmq\controllers\RabbitMQController;
 use mikemadisonweb\rabbitmq\exceptions\InvalidConfigException;
 use PhpAmqpLib\Connection\AbstractConnection;
 use yii\base\Application;
@@ -13,6 +14,11 @@ use yii\base\BootstrapInterface;
 class DependencyInjection implements BootstrapInterface
 {
     /**
+     * @var $logger Logger
+     */
+    private $logger;
+
+    /**
      * Configuration auto-loading
      * @param Application $app
      * @throws InvalidConfigException
@@ -20,10 +26,21 @@ class DependencyInjection implements BootstrapInterface
     public function bootstrap($app)
     {
         $config = $app->rabbitmq->getConfig();
+        $this->registerLogger($config);
         $this->registerConnections($config);
         $this->registerRouting($config);
         $this->registerProducers($config);
         $this->registerConsumers($config);
+        $this->addControllers($app);
+    }
+
+    /**
+     * Register logger service
+     * @param $config
+     */
+    private function registerLogger($config)
+    {
+        \Yii::$container->setSingleton(Configuration::LOGGER_SERVICE_NAME, ['class' => Logger::class], ['options' => $config->logger]);
     }
 
     /**
@@ -64,18 +81,26 @@ class DependencyInjection implements BootstrapInterface
     protected function registerProducers(Configuration $config)
     {
         $autoDeclare = $config->autoDeclare;
-        $logger = $config->logger;
+        $logger = $this->logger;
         foreach ($config->producers as $options) {
             $serviceAlias = sprintf(Configuration::PRODUCER_SERVICE_NAME, $options['name']);
-            \Yii::$container->setSingleton($serviceAlias, function () use ($options, $autoDeclare, $logger) {
+            \Yii::$container->setSingleton($serviceAlias, function () use ($options, $autoDeclare) {
                 /**
                  * @var $connection AbstractConnection
                  */
                 $connection = \Yii::$container->get(sprintf(Configuration::CONNECTION_SERVICE_NAME, $options['connection']));
-                $producer = new Producer($connection, $autoDeclare);
-                \Yii::$container->invoke([$producer, 'setContentType'], [$options['contentType']]);
-                \Yii::$container->invoke([$producer, 'setDeliveryMode'], [$options['deliveryMode']]);
-                \Yii::$container->invoke([$producer, 'setLogger'], [$logger]);
+                /**
+                 * @var $routing Routing
+                 */
+                $routing = \Yii::$container->get(Configuration::ROUTING_SERVICE_NAME);
+                /**
+                 * @var $logger Logger
+                 */
+                $logger = \Yii::$container->get(Configuration::LOGGER_SERVICE_NAME);
+                $producer = new Producer($connection, $routing, $logger, $autoDeclare);
+                \Yii::$container->invoke([$producer, 'setContentType'], [$options['content_type']]);
+                \Yii::$container->invoke([$producer, 'setDeliveryMode'], [$options['delivery_mode']]);
+                \Yii::$container->invoke([$producer, 'setSerializer'], [$options['serializer']]);
 
                 return $producer;
             });
@@ -97,7 +122,11 @@ class DependencyInjection implements BootstrapInterface
                  * @var $connection AbstractConnection
                  */
                 $connection = \Yii::$container->get(sprintf(Configuration::CONNECTION_SERVICE_NAME, $options['connection']));
-                $consumer = new Consumer($connection, $autoDeclare);
+                /**
+                 * @var $routing Routing
+                 */
+                $routing = \Yii::$container->get(Configuration::ROUTING_SERVICE_NAME);
+                $consumer = new Consumer($connection, $routing, $autoDeclare);
                 $queues = [];
                 foreach ($options['callbacks'] as $queueName => $callback) {
                     $callbackClass = $this->getCallbackClass($callback);
@@ -148,5 +177,14 @@ class DependencyInjection implements BootstrapInterface
         }
 
         return $callbackClass;
+    }
+
+    /**
+     * Auto-configure console controller classes
+     * @param Application $app
+     */
+    private function addControllers(Application $app)
+    {
+        $app->controllerMap["rabbitmq"] = RabbitMQController::class;
     }
 }

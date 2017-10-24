@@ -4,13 +4,15 @@ namespace mikemadisonweb\rabbitmq\components;
 
 use mikemadisonweb\rabbitmq\Configuration;
 use mikemadisonweb\rabbitmq\events\RabbitMQPublisherEvent;
+use PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 
 /**
- * Producer, that publishes AMQP Messages
+ * Service that sends AMQP Messages
+ * @package mikemadisonweb\rabbitmq\components
  */
-class Producer extends BaseRabbitMQ implements ProducerInterface
+class Producer extends BaseRabbitMQ
 {
     protected $contentType;
     protected $deliveryMode;
@@ -40,10 +42,19 @@ class Producer extends BaseRabbitMQ implements ProducerInterface
         $this->serializer = $serializer;
     }
 
+
+    /**
+     * @return callable
+     */
+    public function getSerializer() : callable
+    {
+        return $this->serializer;
+    }
+
     /**
      * @return array
      */
-    protected function getBasicProperties()
+    public function getBasicProperties() : array
     {
         return [
             'content_type' => $this->contentType,
@@ -58,12 +69,12 @@ class Producer extends BaseRabbitMQ implements ProducerInterface
      * @param string $exchangeName
      * @param string $routingKey
      * @param array $headers
+     * @throws \RuntimeException
      */
     public function publish($msgBody, string $exchangeName, string $routingKey = '', array $headers = null)
     {
         if ($this->autoDeclare) {
-            $routing = \Yii::$container->get(Configuration::ROUTING_SERVICE_NAME);
-            $routing->declareAll($this->conn);
+            $this->routing->declareAll($this->conn);
         }
         if (!is_string($msgBody)) {
             $msgBody = call_user_func($this->serializer, $msgBody);

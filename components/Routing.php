@@ -3,6 +3,7 @@
 namespace mikemadisonweb\rabbitmq\components;
 
 use PhpAmqpLib\Connection\AbstractConnection;
+use PhpAmqpLib\Exception\AMQPProtocolChannelException;
 use yii\helpers\ArrayHelper;
 
 class Routing
@@ -40,10 +41,12 @@ class Routing
     }
 
     /**
+     * Declare all routing entries defined by configuration
      * @param AbstractConnection $conn
+     * @return bool
      * @throws \RuntimeException
      */
-    public function declareAll(AbstractConnection $conn)
+    public function declareAll(AbstractConnection $conn) : bool
     {
         if (!$this->isDeclared) {
             foreach (array_keys($this->exchanges) as $name) {
@@ -54,7 +57,11 @@ class Routing
             }
             $this->declareBindings($conn);
             $this->isDeclared = true;
+
+            return true;
         }
+
+        return false;
     }
 
     /**
@@ -182,6 +189,94 @@ class Routing
             );
             $this->exchangesDeclared[$exchangeName] = true;
         }
+    }
+
+    /**
+     * Purge the queue
+     * @param string $queueName
+     * @throws \RuntimeException
+     */
+    public function purgeQueue(AbstractConnection $conn, string $queueName)
+    {
+        if (!isset($this->queues[$queueName])) {
+            throw new \RuntimeException("Queue {$queueName} is not configured. Purge is aborted.");
+        }
+        $conn->channel()->queue_purge($queueName, true);
+    }
+
+    /**
+     * Delete all configured queues and exchanges
+     * @param AbstractConnection $conn
+     * @throws \RuntimeException
+     */
+    public function deleteAll(AbstractConnection $conn)
+    {
+        foreach (array_keys($this->queues) as $name) {
+            $this->deleteQueue($conn, $name);
+        }
+        foreach (array_keys($this->exchanges) as $name) {
+            $this->deleteExchange($conn, $name);
+        }
+    }
+
+    /**
+     * Delete the queue
+     * @param string $queueName
+     * @throws \RuntimeException
+     */
+    public function deleteQueue(AbstractConnection $conn, string $queueName)
+    {
+        if (!isset($this->queues[$queueName])) {
+            throw new \RuntimeException("Queue {$queueName} is not configured. Delete is aborted.");
+        }
+        $conn->channel()->queue_delete($queueName);
+    }
+
+    /**
+     * Delete the queue
+     * @param string $exchangeName
+     * @throws \RuntimeException
+     */
+    public function deleteExchange(AbstractConnection $conn, string $exchangeName)
+    {
+        if (!isset($this->queues[$exchangeName])) {
+            throw new \RuntimeException("Queue {$exchangeName} is not configured. Delete is aborted.");
+        }
+        $conn->channel()->exchange_delete($exchangeName);
+    }
+
+    /**
+     * Checks whether exchange is already declared in broker
+     * @param AbstractConnection $conn
+     * @param string $exchangeName
+     * @return bool
+     */
+    public function isExchangeExists(AbstractConnection $conn, string $exchangeName) : bool
+    {
+        try {
+            $conn->channel()->exchange_declare($exchangeName, null, true);
+        } catch (AMQPProtocolChannelException $e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Checks whether queue is already declared in broker
+     * @param AbstractConnection $conn
+     * @param string $queueName
+     * @return bool
+     */
+    public function isQueueExists(AbstractConnection $conn, string $queueName) : bool
+    {
+        try {
+            $conn->channel()->queue_declare($queueName, true);
+        } catch (AMQPProtocolChannelException $e) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
