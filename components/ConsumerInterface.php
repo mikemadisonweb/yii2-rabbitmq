@@ -9,22 +9,17 @@ interface ConsumerInterface
     /**
      * Flag for message ack
      */
-    const MSG_ACK = 1;
+    const MSG_ACK = 0;
 
     /**
-     * Flag single for message nack and requeue
+     * Flag for reject and drop message
      */
-
-    const MSG_SINGLE_NACK_REQUEUE = 2;
-    /**
-     * Flag for reject and requeue
-     */
-    const MSG_REJECT_REQUEUE = 0;
+    const MSG_REJECT = 1;
 
     /**
-     * Flag for reject and drop
+     * Flag for reject and requeue message
      */
-    const MSG_REJECT = -1;
+    const MSG_REQUEUE = 2;
 
     /**
      * @param AMQPMessage $msg The message

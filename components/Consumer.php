@@ -5,7 +5,6 @@ namespace mikemadisonweb\rabbitmq\components;
 use mikemadisonweb\rabbitmq\events\RabbitMQConsumerEvent;
 use PhpAmqpLib\Exception\AMQPTimeoutException;
 use PhpAmqpLib\Message\AMQPMessage;
-use yii\helpers\Console;
 
 /**
  * Service that receives AMQP Messages
@@ -200,6 +199,10 @@ class Consumer extends BaseRabbitMQ
         } else {
             return;
         }
+
+        if (0 !== $this->getMemoryLimit() && $this->isRamAlmostOverloaded()) {
+            $this->stopConsuming();
+        }
     }
 
     public function forceStopConsumer()
@@ -212,6 +215,7 @@ class Consumer extends BaseRabbitMQ
      * @param $queueName
      * @param $callback
      * @throws \Throwable
+     * @throws \BadFunctionCallException
      */
     protected function onReceive(AMQPMessage $msg, string $queueName, callable $callback)
     {
@@ -222,37 +226,26 @@ class Consumer extends BaseRabbitMQ
         $timeStart = microtime(true);
         try {
             $processFlag = $callback($msg);
-            $this->handleResultCode($msg, $processFlag);
+            $this->sendResult($msg, $processFlag);
+            $this->consumed++;
             \Yii::$app->rabbitmq->trigger(RabbitMQConsumerEvent::AFTER_CONSUME, new RabbitMQConsumerEvent([
                 'message' => $msg,
                 'consumer' => $this,
             ]));
-            if ($this->logger['print_console']) {
-                $this->printToConsole($queueName, $timeStart, $processFlag);
-            }
-            if ($this->logger['enable']) {
-                \Yii::info([
-                    'info' => 'Queue message processed.',
-                    'amqp' => [
-                        'queue' => $queueName,
-                        'message' => $msg->getBody(),
-                        'return_code' => $processFlag,
-                        'execution_time' => $this->getExecutionTime($timeStart),
-                        'memory' => $this->getMemory(),
-                    ],
-                ], $this->logger['category']);
-            }
 
-            $this->consumed++;
-            $this->maybeStopConsumer();
-            if (0 !== $this->getMemoryLimit() && $this->isRamAlmostOverloaded()) {
-                $this->stopConsuming();
-            }
+            $this->logger->printToConsole($queueName, $processFlag, $timeStart);
+            $this->logger->log(
+                'Queue message processed.',
+                $msg,
+                [
+                    'queue' => $queueName,
+                    'processFlag' => $processFlag,
+                    'timeStart' => $timeStart,
+                    'memory' => true,
+                ]
+            );
         } catch (\Throwable $e) {
-            if ($this->logger['enable']) {
-                $this->logError($e, $queueName, $msg, $timeStart);
-            }
-
+            $this->logger->logError($e, $msg);
             throw $e;
         }
     }
@@ -262,14 +255,11 @@ class Consumer extends BaseRabbitMQ
      * @param AMQPMessage $msg
      * @param $processFlag
      */
-    protected function handleResultCode(AMQPMessage $msg, $processFlag)
+    protected function sendResult(AMQPMessage $msg, $processFlag)
     {
-        if ($processFlag === ConsumerInterface::MSG_REJECT_REQUEUE || false === $processFlag) {
+        if ($processFlag === ConsumerInterface::MSG_REQUEUE || false === $processFlag) {
             // Reject and requeue message to RabbitMQ
             $msg->delivery_info['channel']->basic_reject($msg->delivery_info['delivery_tag'], true);
-        } elseif ($processFlag === ConsumerInterface::MSG_SINGLE_NACK_REQUEUE) {
-            // NACK and requeue message to RabbitMQ
-            $msg->delivery_info['channel']->basic_nack($msg->delivery_info['delivery_tag'], false, true);
         } elseif ($processFlag === ConsumerInterface::MSG_REJECT) {
             // Reject and drop
             $msg->delivery_info['channel']->basic_reject($msg->delivery_info['delivery_tag'], false);

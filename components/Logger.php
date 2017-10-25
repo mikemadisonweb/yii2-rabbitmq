@@ -7,17 +7,11 @@ use yii\helpers\Console;
 
 class Logger
 {
-    protected $enabled;
-    protected $systemMemory;
-    protected $category;
-    protected $printConsole;
+    public $options;
 
-    public function __construct(array $options)
+    public function getOptions() : array
     {
-        $this->enabled = $options['enabled'];
-        $this->systemMemory = $options['system_memory'];
-        $this->category = $options['category'];
-        $this->printConsole = $options['print_console'];
+        return $this->options;
     }
 
     /**
@@ -27,15 +21,12 @@ class Logger
      * @param $timeStart
      * @param $processFlag
      */
-    public function printToConsole(string $queueName, $timeStart, $processFlag)
+    public function printToConsole(string $queueName, $processFlag, $timeStart)
     {
-        if (!$this->enabled || !$this->printConsole) {
+        if (!$this->options['print_console']) {
             return;
         }
-        if ($processFlag === ConsumerInterface::MSG_REJECT_REQUEUE || false === $processFlag) {
-            $messageFormat = '%s - Message from queue `%s` was not processed and sent back to queue! Execution time: %s %s';
-            $color = Console::FG_RED;
-        } elseif ($processFlag === ConsumerInterface::MSG_SINGLE_NACK_REQUEUE) {
+        if ($processFlag === ConsumerInterface::MSG_REQUEUE || false === $processFlag) {
             $messageFormat = '%s - Message from queue `%s` was not processed and sent back to queue! Execution time: %s %s';
             $color = Console::FG_RED;
         } elseif ($processFlag === ConsumerInterface::MSG_REJECT) {
@@ -43,7 +34,7 @@ class Logger
             $color = Console::FG_RED;
         } else {
             $messageFormat = '%s - Message from queue `%s` consumed successfully! Execution time: %s %s';
-            $color = Console::FG_YELLOW;
+            $color = Console::FG_GREEN;
         }
         $curDate = date('Y-m-d H:i:s');
         $execTime = $this->getExecutionTime($timeStart);
@@ -57,7 +48,7 @@ class Logger
      */
     public function printErrorToConsole(\Exception $e)
     {
-        if (!$this->enabled || !$this->printConsole) {
+        if (!$this->options['print_console']) {
             return;
         }
         $color = Console::FG_RED;
@@ -67,25 +58,48 @@ class Logger
 
     /**
      * Log message using standard Yii logger
-     * @param \Throwable $e
-     * @param $queueName
+     * @param string $title
      * @param AMQPMessage $msg
-     * @param $timeStart
+     * @param array $options
      */
-    public function logError(\Throwable $e, string $queueName, AMQPMessage $msg, $timeStart)
+    public function log(string $title, AMQPMessage $msg, array $options)
     {
-        if (!$this->enabled) {
+        if (!$this->options['log']) {
+            return;
+        }
+        $extra['execution_time'] = isset($options['timeStart']) ? $this->getExecutionTime($options['timeStart']) : null;
+        $extra['return_code'] = $options['processFlag'] ?? null;
+        $extra['memory'] = isset($options['memory']) ? $this->getMemory() : null;
+        $extra['routing_key'] = $options['routingKey'] ?? null;
+        $extra['queue'] = $options['queue'] ?? null;
+        $extra['exchange'] = $options['exchange'] ?? null;
+        \Yii::info([
+            'info' => $title,
+            'amqp' => [
+                'body' => $msg->getBody(),
+                'headers' => $msg->has('application_headers') ? $msg->get('application_headers')->getNativeData() : null,
+                'extra' => $extra,
+            ],
+        ], $this->options['category']);
+    }
+
+    /**
+     * Log error message using standard Yii logger
+     * @param \Throwable $e
+     * @param AMQPMessage $msg
+     */
+    public function logError(\Throwable $e, AMQPMessage $msg)
+    {
+        if (!$this->options['log']) {
             return;
         }
         \Yii::error([
             'msg' => $e->getMessage(),
             'amqp' => [
-                'queue' => $queueName,
                 'message' => $msg->getBody(),
                 'stacktrace' => $e->getTraceAsString(),
-                'execution_time' => $this->getExecutionTime($timeStart),
             ],
-        ], $this->category);
+        ], $this->options['category']);
     }
 
     /**
@@ -119,7 +133,7 @@ class Logger
      */
     protected function getMemory() : string
     {
-        if ($this->systemMemory) {
+        if ($this->options['system_memory']) {
             return $this->getSystemFreeMemory();
         }
 

@@ -103,14 +103,14 @@ class Configuration extends Component
             ],
         ],
         'logger' => [
-            'enable' => true,
+            'log' => false,
             'category' => 'application',
-            'print_console' => false,
+            'print_console' => true,
             'system_memory' => false,
         ],
     ];
 
-    public $autoDeclare = null;
+    public $auto_declare = null;
     public $connections = [];
     public $producers = [];
     public $consumers = [];
@@ -226,8 +226,8 @@ class Configuration extends Component
      */
     protected function validateTopLevel()
     {
-        if (($this->autoDeclare !== null) && !is_bool($this->autoDeclare)) {
-            throw new InvalidConfigException("Option `autoDeclare` should be of type boolean.");
+        if (($this->auto_declare !== null) && !is_bool($this->auto_declare)) {
+            throw new InvalidConfigException("Option `auto_declare` should be of type boolean.");
         }
 
         if (!is_array($this->logger)) {
@@ -396,8 +396,8 @@ class Configuration extends Component
     protected function completeWithDefaults()
     {
         $defaults = self::DEFAULTS;
-        if (null === $this->autoDeclare) {
-            $this->autoDeclare = $defaults['autoDeclare'];
+        if (null === $this->auto_declare) {
+            $this->auto_declare = $defaults['auto_declare'];
         }
         if (empty($this->logger)) {
             $this->logger = $defaults['logger'];

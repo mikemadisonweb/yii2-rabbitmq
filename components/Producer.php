@@ -97,15 +97,14 @@ class Producer extends BaseRabbitMQ
             'producer' => $this,
         ]));
 
-        if ($this->logger['enable']) {
-            \Yii::info([
-                'info' => 'AMQP message published',
-                'amqp' => [
-                    'body' => $msg->getBody(),
-                    'routing_keys' => $routingKey,
-                    'headers' => $msg->has('application_headers') ? $msg->get('application_headers')->getNativeData() : $headers,
-                ],
-            ], $this->logger['category']);
-        }
+        $this->logger->log(
+            'AMQP message published',
+            $msg,
+            [
+                'exchange' => $exchangeName,
+                'routing_key' => $routingKey,
+
+            ]
+        );
     }
 }

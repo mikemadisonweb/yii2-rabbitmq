@@ -4,13 +4,16 @@ namespace mikemadisonweb\rabbitmq\components;
 
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AbstractConnection;
-use yii\helpers\Console;
 
 abstract class BaseRabbitMQ
 {
     protected $conn;
     protected $autoDeclare;
     protected $ch;
+
+    /**
+     * @var $logger Logger
+     */
     protected $logger;
 
     /**
@@ -28,6 +31,7 @@ abstract class BaseRabbitMQ
     {
         $this->conn = $conn;
         $this->routing = $routing;
+        $this->logger = $logger;
         $this->autoDeclare = $autoDeclare;
         if ($conn->connectOnConstruct()) {
             $this->getChannel();
