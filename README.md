@@ -1,6 +1,6 @@
 RabbitMQ Extension for Yii2
 ==================
-Wrapper based on php-amqplib to incorporate messaging in your Yii2 application via RabbitMQ. Inspired by RabbitMqBundle for Symfony framework which is awesome.
+Wrapper based on php-amqplib to incorporate messaging in your Yii2 application via RabbitMQ. Inspired by RabbitMqBundle for Symfony framework as it is really awesome.
 
 This documentation is relevant for the latest stable version of the extension.
 
@@ -17,7 +17,7 @@ php composer.phar require mikemadisonweb/yii2-rabbitmq
 ```
 or add
 ```json
-"mikemadisonweb/yii2-rabbitmq": "^1.7.0"
+"mikemadisonweb/yii2-rabbitmq": "^1.5.1"
 ```
 to the require section of your `composer.json` file.
 
@@ -49,21 +49,18 @@ return [
                         'name' => 'import_data',
                         'type' => 'direct',
                     ],
-                    'queue_options' => [
-                        'declare' => false, // Use this if you don't want to create a queue on producing messages
-                    ],
                 ],
             ],
             'consumers' => [
                 'import_data' => [
                     'connection' => 'default',
                     'exchange_options' => [
-                        'name' => 'import_data',
-                        'type' => 'direct',
+                        'name' => 'import_data', // Name of exchange to declare
+                        'type' => 'direct', // Type of exchange
                     ],
                     'queue_options' => [
                         'name' => 'import_data', // Queue name which will be binded to the exchange adove
-                        'routing_keys' => ['import_data'], // Name of the exchange to bind to
+                        'routing_keys' => ['import_data'], // Your custom options
                         'durable' => true,
                         'auto_delete' => false,
                     ],
@@ -132,15 +129,11 @@ return [
                             'name' => 'import_data',
                             'callback' => \path\to\ImportDataConsumer::class,
                             'routing_keys' => ['import_data'], // Queue will be binded using routing key
-                            // Other optional settings can be listed here (like in queue_options)
-                            'durable' => true,
                         ],
                         'update_index' => [
                             'name' => 'update_index',
                             'callback' => \path\to\UpdateIndexConsumer::class,
                             'routing_keys' => ['update_index'],
-                            // Refer to the Options section for more
-                            'exclusive' => true, // Optional
                         ],
                     ],
                 ],
@@ -189,9 +182,8 @@ return [
             // ...
             'logger' => [
                 'enable' => true,
-                'category' => 'application',
-                'print_console' => false,
-                'system_memory' => false,
+                'category' => 'amqp',
+                'print_console' => true,
             ],
         ],
         // ...
@@ -254,40 +246,45 @@ $producer->publish($msg, 'import_data');
 ```
 This template for a service name 'rabbit_mq.producer.%s' is also available as a constant mikemadisonweb\rabbitmq\components\BaseRabbitMQ::PRODUCER_SERVICE_NAME. It's needed because producer classes are lazy loaded, that means they are only got created on demand. Likewise the Connection class also got created on demand, that means a connection to RabbitMQ would not be established on each request.
 
-Options
+Defaults
 -------------
-All default options are taken from php-amqplib library. Complete explanation about options, their defaults and valuable details can be found in [AMQP 0-9-1 Reference Guide](http://www.rabbitmq.com/amqp-0-9-1-reference.html). 
+All default options are taken from php-amqplib library. If you are not familiar with meanings of some of these options, you can find them in [AMQP 0-9-1 Complete Reference Guide](http://www.rabbitmq.com/amqp-0-9-1-reference.html). 
 
-#####  Exchange
-For example, to declare an exchange you should provide name and type for it.
-
-parameter | required | type | default | comments
---- | --- | --- | --- | ---
-name | yes | string |  | The exchange name consists of a non-empty sequence of these characters: letters, digits, hyphen, underscore, period, or colon.
-type | yes | string |  | Type of the exchange, possible values are `direct`, `fanout`, `topic` and `headers`.
-declare | no | boolean | true | Whether to declare a exchange on sending or consuming messages.
-passive | no | boolean | false | If set to true, the server will reply with Declare-Ok if the exchange already exists with the same name, and raise an error if not. The client can use this to check whether an exchange exists without modifying the server state. When set, all other method fields except name and no-wait are ignored. A declare with both passive and no-wait has no effect.
-durable | no | boolean | false | Durable exchanges remain active when a server restarts. Non-durable exchanges (transient exchanges) are purged if/when a server restarts.
-auto_delete | no | boolean | true | If set to true, the exchange would be deleted when no queues are binded to it anymore.
-internal | no | boolean | false | Internal exchange may not be used directly by publishers, but only when bound to other exchanges.
-nowait | no | boolean | false | Client may send next request immediately after sending the first one, no waiting for reply is required
-arguments | no | array | null | A set of arguments for the declaration.
-ticket | no | integer | null | Access ticket
-
-Good use-case of the `arguments` parameter usage can be a creation of a [dead-letter-exchange](https://github.com/php-amqplib/php-amqplib/blob/master/demo/queue_arguments.php#L17).
-#####  Queue
+For example, to declare an exchange you should provide name and type for it. Other optional parameters with corresponding default values are listed below:
+```php
+    $queueDefaults = [
+        'passive' => false,
+        'durable' => false,
+        'auto_delete' => true,
+        'internal' => false,
+        'nowait' => false,
+        'arguments' => null,
+        'ticket' => null,
+        'declare' => true,
+    ];
+```
 As for the queue declaration, all parameters are optional. Even if you does not provide a name for your queue server will generate unique name for you: 
-
-parameter | required | type | default | comments
---- | --- | --- | --- | ---
-name | no | string | '' | The queue name can be empty, or a sequence of these characters: letters, digits, hyphen, underscore, period, or colon. 
-declare | no | boolean | true | Whether to declare a queue on sending or consuming messages.
-passive | no | boolean | false | If set to true, the server will reply with Declare-Ok if the queue already exists with the same name, and raise an error if not.
-durable | no | boolean | false | Durable queues remain active when a server restarts. Non-durable queues (transient queues) are purged if/when a server restarts.
-auto_delete | no | boolean | true | If set to true, the queue is deleted when all consumers have finished using it. 
-exclusive | no | boolean | false | Exclusive queues may only be accessed by the current connection, and are deleted when that connection closes. Passive declaration of an exclusive queue by other connections are not allowed.
-nowait | no | boolean | false | Client may send next request immediately after sending the first one, no waiting for reply is required
-arguments | false | array | null | A set of arguments for the declaration. 
-ticket | no | integer | null | Access ticket
-
+```php
+    $queueDefaults = [
+        'name' => '',
+        'passive' => false,
+        'durable' => false,
+        'exclusive' => false,
+        'auto_delete' => true,
+        'nowait' => false,
+        'arguments' => null,
+        'ticket' => null,
+        'declare' => true,
+    ];
+```
 Beware that not all these options are allowed to be changed 'on-the-fly', in other words after queue or exchange had already been created. Otherwise, you will receive an error. 
+
+Logger default settings:
+```php
+    $loggerDefaults = [
+        'enable' => true,
+        'category' => 'application',
+        'print_console' => false,
+        'system_memory' => false,
+    ];
+```

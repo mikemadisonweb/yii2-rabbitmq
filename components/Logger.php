@@ -21,7 +21,7 @@ class Logger
      * @param $timeStart
      * @param $processFlag
      */
-    public function printToConsole(string $queueName, $processFlag, $timeStart)
+    public function printResult(string $queueName, $processFlag, $timeStart)
     {
         if (!$this->options['print_console']) {
             return;
@@ -40,7 +40,7 @@ class Logger
         $execTime = $this->getExecutionTime($timeStart);
         $memory = $this->getMemory();
         $consoleMessage = sprintf($messageFormat, $curDate, $queueName, $execTime, $memory);
-        $this->stdout($consoleMessage, $color);
+        $this->printInfo($consoleMessage, $color);
     }
 
     /**
@@ -53,7 +53,7 @@ class Logger
         }
         $color = Console::FG_RED;
         $consoleMessage = sprintf('Error: %s File: %s Line: %s', $e->getMessage(), $e->getFile(), $e->getLine());
-        $this->stdout($consoleMessage, $color);
+        $this->printInfo($consoleMessage, $color);
     }
 
     /**
@@ -108,7 +108,7 @@ class Logger
      * @param $color
      * @return bool|int
      */
-    protected function stdout($message, $color = Console::FG_YELLOW)
+    public function printInfo($message, $color = Console::FG_YELLOW)
     {
         if (Console::streamSupportsAnsiColors(\STDOUT)) {
             $message = Console::ansiFormat($message, [$color]) . "\n";

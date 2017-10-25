@@ -73,14 +73,20 @@ class Producer extends BaseRabbitMQ
      */
     public function publish($msgBody, string $exchangeName, string $routingKey = '', array $headers = null)
     {
+        $serialized = false;
         if ($this->autoDeclare) {
             $this->routing->declareAll($this->conn);
         }
         if (!is_string($msgBody)) {
             $msgBody = call_user_func($this->serializer, $msgBody);
+            $serialized = true;
         }
         $msg = new AMQPMessage($msgBody, $this->getBasicProperties());
-        if (!empty($headers)) {
+
+        if (!empty($headers) || $serialized) {
+            if ($serialized) {
+                $headers['rabbitmq.serialized'] = 1;
+            }
             $headersTable = new AMQPTable($headers);
             $msg->set('application_headers', $headersTable);
         }
@@ -103,7 +109,6 @@ class Producer extends BaseRabbitMQ
             [
                 'exchange' => $exchangeName,
                 'routing_key' => $routingKey,
-
             ]
         );
     }

@@ -136,23 +136,10 @@ class DependencyInjection implements BootstrapInterface
                     $queues[$queueName] = [$callbackClass, 'execute'];
                 }
                 \Yii::$container->invoke([$consumer, 'setQueues'], [$queues]);
-                if (isset($options['qos_options'])) {
-                    \Yii::$container->invoke([$consumer, 'setQosOptions'], [
-                        $options['qos_options']['prefetch_size'],
-                        $options['qos_options']['prefetch_count'],
-                        $options['qos_options']['global'],
-                    ]);
-                }
-                if (isset($options['idle_timeout'])) {
-                    \Yii::$container->invoke([$consumer, 'setIdleTimeout'], [
-                        $options['idle_timeout'],
-                    ]);
-                }
-                if (isset($options['idle_timeout_exit_code'])) {
-                    \Yii::$container->invoke([$consumer, 'setIdleTimeoutExitCode'], [
-                        $options['idle_timeout_exit_code'],
-                    ]);
-                }
+                \Yii::$container->invoke([$consumer, 'setQos'], [$options['qos']]);
+                \Yii::$container->invoke([$consumer, 'setIdleTimeout'], [$options['idle_timeout']]);
+                \Yii::$container->invoke([$consumer, 'setIdleTimeoutExitCode'], [$options['idle_timeout_exit_code']]);
+                \Yii::$container->invoke([$consumer, 'setDeserializer'], [$options['deserializer']]);
 
                 return $consumer;
             });

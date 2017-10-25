@@ -84,7 +84,7 @@ class Configuration extends Component
                 'connection' => self::DEFAULT_CONNECTION_NAME,
                 'content_type' => 'text/plain',
                 'delivery_mode' => 2,
-                'serializer' => 'json_encode',
+                'serializer' => 'serialize',
             ],
         ],
         'consumers' => [
@@ -99,7 +99,7 @@ class Configuration extends Component
                 ],
                 'idle_timeout' => null,
                 'idle_timeout_exit_code' => null,
-                'deserializer' => 'json_decode',
+                'deserializer' => 'unserialize',
             ],
         ],
         'logger' => [

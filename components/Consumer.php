@@ -5,6 +5,7 @@ namespace mikemadisonweb\rabbitmq\components;
 use mikemadisonweb\rabbitmq\events\RabbitMQConsumerEvent;
 use PhpAmqpLib\Exception\AMQPTimeoutException;
 use PhpAmqpLib\Message\AMQPMessage;
+use yii\helpers\Console;
 
 /**
  * Service that receives AMQP Messages
@@ -12,10 +13,13 @@ use PhpAmqpLib\Message\AMQPMessage;
  */
 class Consumer extends BaseRabbitMQ
 {
+    protected $deserializer;
+    protected $qos;
     protected $idleTimeout;
     protected $idleTimeoutExitCode;
     protected $queues = [];
     protected $memoryLimit = 0;
+
 
     private $id;
     private $target;
@@ -90,24 +94,35 @@ class Consumer extends BaseRabbitMQ
     }
 
     /**
-     * Resets the consumed property.
-     * Use when you want to call start() or consume() multiple times.
+     * @return mixed
      */
-    public function resetConsumed()
+    public function getDeserializer() : callable
     {
-        $this->consumed = 0;
+        return $this->deserializer;
     }
 
     /**
-     * Sets the qos settings for the current channel
-     * Consider that prefetchSize and global do not work with rabbitMQ version <= 8.0
-     * @param int $prefetchSize
-     * @param int $prefetchCount
-     * @param bool $global
+     * @param mixed $deserializer
      */
-    public function setQosOptions($prefetchSize, $prefetchCount, $global)
+    public function setDeserializer(callable $deserializer)
     {
-        $this->getChannel()->basic_qos($prefetchSize, $prefetchCount, $global);
+        $this->deserializer = $deserializer;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getQos() : array
+    {
+        return $this->qos;
+    }
+
+    /**
+     * @param mixed $qos
+     */
+    public function setQos(array $qos)
+    {
+        $this->qos = $qos;
     }
 
     /**
@@ -120,6 +135,7 @@ class Consumer extends BaseRabbitMQ
      */
     public function consume($msgAmount) : int
     {
+        $this->setQosOptions();
         $this->target = $msgAmount;
         if ($this->autoDeclare) {
             $this->routing->declareAll($this->conn);
@@ -127,21 +143,36 @@ class Consumer extends BaseRabbitMQ
         $this->startConsuming();
         // At the end of the callback execution
         while (count($this->getChannel()->callbacks)) {
-            $this->maybeStopConsumer();
-            if (!$this->forceStop) {
-                try {
-                    $this->getChannel()->wait(null, false, $this->getIdleTimeout());
-                } catch (AMQPTimeoutException $e) {
-                    if (null !== $this->getIdleTimeoutExitCode()) {
-                        return $this->getIdleTimeoutExitCode();
-                    }
-
-                    throw $e;
+            if ($this->maybeStopConsumer()) {
+                break;
+            }
+            try {
+                $this->getChannel()->wait(null, false, $this->getIdleTimeout());
+            } catch (AMQPTimeoutException $e) {
+                if (null !== $this->getIdleTimeoutExitCode()) {
+                    return $this->getIdleTimeoutExitCode();
                 }
+
+                throw $e;
             }
         }
 
         return 0;
+    }
+
+    /**
+     * Sets the qos settings for the current channel
+     * This method needs a connection to broker
+     */
+    protected function setQosOptions()
+    {
+        if (empty($this->qos)) {
+            return;
+        }
+        $prefetchSize = $this->qos['prefetch_size'] ?? null;
+        $prefetchCount = $this->qos['prefetch_count'] ?? null;
+        $global = $this->qos['global'] ?? null;
+        $this->getChannel()->basic_qos($prefetchSize, $prefetchCount, $global);
     }
 
     /**
@@ -186,7 +217,7 @@ class Consumer extends BaseRabbitMQ
      * Decide whether it's time to stop consuming
      * @throws \BadFunctionCallException
      */
-    protected function maybeStopConsumer()
+    protected function maybeStopConsumer() : bool
     {
         if (extension_loaded('pcntl') && (defined('AMQP_WITHOUT_SIGNALS') ? !AMQP_WITHOUT_SIGNALS : true)) {
             if (!function_exists('pcntl_signal_dispatch')) {
@@ -196,21 +227,50 @@ class Consumer extends BaseRabbitMQ
         }
         if ($this->forceStop || ($this->consumed === $this->target && $this->target > 0)) {
             $this->stopConsuming();
-        } else {
-            return;
+            return true;
         }
 
         if (0 !== $this->getMemoryLimit() && $this->isRamAlmostOverloaded()) {
             $this->stopConsuming();
+            return true;
         }
-    }
 
-    public function forceStopConsumer()
-    {
-        $this->forceStop = true;
+        return false;
     }
 
     /**
+     * Force stop the consumer
+     */
+    public function stopDaemon()
+    {
+        $this->forceStop = true;
+        $this->stopConsuming();
+        $this->logger->printInfo("\nConsumer stopped by user.\n", Console::FG_YELLOW);
+    }
+
+    /**
+     * Force restart the consumer
+     */
+    public function restartDaemon()
+    {
+        $this->stopConsuming();
+        $this->reconnect();
+        $this->resetConsumed();
+        $this->logger->printInfo("\nConsumer has been restarted.\n", Console::FG_YELLOW);
+        $this->consume($this->target);
+    }
+
+    /**
+     * Resets the consumed property.
+     * Use when you want to call start() or consume() multiple times.
+     */
+    public function resetConsumed()
+    {
+        $this->consumed = 0;
+    }
+
+    /**
+     * Callback that will be fired upon receiving new message
      * @param AMQPMessage $msg
      * @param $queueName
      * @param $callback
@@ -219,12 +279,18 @@ class Consumer extends BaseRabbitMQ
      */
     protected function onReceive(AMQPMessage $msg, string $queueName, callable $callback)
     {
+        $timeStart = microtime(true);
         \Yii::$app->rabbitmq->trigger(RabbitMQConsumerEvent::BEFORE_CONSUME, new RabbitMQConsumerEvent([
             'message' => $msg,
             'consumer' => $this,
         ]));
-        $timeStart = microtime(true);
+
         try {
+            // deserialize message back to initial data type
+            if ($msg->has('application_headers') && isset($msg->get('application_headers')->getNativeData()['rabbitmq.serialized'])) {
+                $msg->setBody(call_user_func($this->deserializer, $msg->getBody()));
+            }
+            // process message and return the result code back to broker
             $processFlag = $callback($msg);
             $this->sendResult($msg, $processFlag);
             $this->consumed++;
@@ -233,7 +299,7 @@ class Consumer extends BaseRabbitMQ
                 'consumer' => $this,
             ]));
 
-            $this->logger->printToConsole($queueName, $processFlag, $timeStart);
+            $this->logger->printResult($queueName, $processFlag, $timeStart);
             $this->logger->log(
                 'Queue message processed.',
                 $msg,

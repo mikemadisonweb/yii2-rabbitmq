@@ -60,7 +60,15 @@ class RabbitMQController extends Controller
      */
     public function beforeAction($event): bool
     {
-        $this->setOptions();
+        if (defined('AMQP_WITHOUT_SIGNALS') === false) {
+            define('AMQP_WITHOUT_SIGNALS', $this->withoutSignals);
+        }
+        if (defined('AMQP_DEBUG') === false) {
+            if ($this->debug === 'false') {
+                $this->debug = false;
+            }
+            define('AMQP_DEBUG', (bool)$this->debug);
+        }
         $this->routing = \Yii::$app->rabbitmq->getRouting();
 
         return parent::beforeAction($event);
@@ -70,13 +78,12 @@ class RabbitMQController extends Controller
      * Run a consumer
      * @param    string $consumer Consumer name
      * @return   int
-     * @throws \Exception
-     * @throws \Error
-     * @throws \RuntimeException
+     * @throws \Throwable
      */
     public function actionConsume(string $consumer) : int
     {
         $this->consumer = \Yii::$app->rabbitmq->getConsumer($consumer);
+        $this->setConsumerOptions();
         if ((null !== $this->memoryLimit) && ctype_digit((string)$this->memoryLimit) && ($this->memoryLimit > 0)) {
             $this->consumer->setMemoryLimit($this->memoryLimit);
         }
@@ -245,48 +252,20 @@ class RabbitMQController extends Controller
     }
 
     /**
-     * Force stop the consumer
-     */
-    public function stopConsumer()
-    {
-        if ($this->consumer instanceof Consumer) {
-            // Process current message, then halt consumer
-            $this->consumer->forceStopConsumer();
-            // Close connection and exit if waiting for messages
-            try {
-                $this->consumer->stopConsuming();
-            } catch (\Exception $e) {
-                \Yii::error($e);
-            }
-            $this->stdout("Daemon stopped by user.\n");
-            exit(0);
-        }
-    }
-
-    public function restartConsumer()
-    {
-        // TODO: Implement restarting of consumer
-    }
-
-    /**
      * Set options passed by user
      * @throws \InvalidArgumentException
      * @throws \BadFunctionCallException
      */
-    private function setOptions()
+    private function setConsumerOptions()
     {
-        if (defined('AMQP_WITHOUT_SIGNALS') === false) {
-            define('AMQP_WITHOUT_SIGNALS', $this->withoutSignals);
-        }
         if (!AMQP_WITHOUT_SIGNALS && extension_loaded('pcntl')) {
             if (!function_exists('pcntl_signal')) {
                 throw new \BadFunctionCallException("Function 'pcntl_signal' is referenced in the php.ini 'disable_functions' and can't be called.");
             }
-            pcntl_signal(SIGTERM, [$this, 'stopConsumer']);
-            pcntl_signal(SIGINT, [$this, 'stopConsumer']);
-            pcntl_signal(SIGHUP, [$this, 'restartConsumer']);
+            pcntl_signal(SIGTERM, [$this->consumer, 'stopDaemon']);
+            pcntl_signal(SIGINT, [$this->consumer, 'stopDaemon']);
+            pcntl_signal(SIGHUP, [$this->consumer, 'restartDaemon']);
         }
-        $this->setDebug();
 
         $this->messagesLimit = (int)$this->messagesLimit;
         $this->memoryLimit = (int)$this->memoryLimit;
@@ -295,16 +274,6 @@ class RabbitMQController extends Controller
         }
         if (!is_numeric($this->memoryLimit) || 0 > $this->memoryLimit) {
             throw new \InvalidArgumentException('The -l option should be null or greater than 0');
-        }
-    }
-
-    private function setDebug()
-    {
-        if (defined('AMQP_DEBUG') === false) {
-            if ($this->debug === 'false') {
-                $this->debug = false;
-            }
-            define('AMQP_DEBUG', (bool)$this->debug);
         }
     }
 }

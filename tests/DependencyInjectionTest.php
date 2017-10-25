@@ -2,12 +2,12 @@
 
 namespace mikemadisonweb\rabbitmq\tests;
 
-use mikemadisonweb\rabbitmq\components\Consumer;
-use mikemadisonweb\rabbitmq\components\Producer;
-use mikemadisonweb\rabbitmq\components\Routing;
+use mikemadisonweb\rabbitmq\components\{
+    Consumer, Logger, Producer, Routing
+};
 use mikemadisonweb\rabbitmq\Configuration;
 use mikemadisonweb\rabbitmq\DependencyInjection;
-use mikemadisonweb\rabbitmq\tests\callback\CallbackTest;
+use mikemadisonweb\rabbitmq\tests\mocks\CallbackMock;
 use PhpAmqpLib\Connection\AbstractConnection;
 
 class DependencyInjectionTest extends TestCase
@@ -22,7 +22,7 @@ class DependencyInjectionTest extends TestCase
                     'connections' => [
                         [
                             'name' => $testName,
-                            'host' => 'localhost',
+                            'host' => 'unreal',
                         ],
                     ],
                     'exchanges' => [
@@ -55,7 +55,7 @@ class DependencyInjectionTest extends TestCase
                             'name' => $testName,
                             'connection' => $testName,
                             'callbacks' => [
-                                $testName => CallbackTest::class,
+                                $testName => CallbackMock::class,
                             ],
                         ],
                     ],
@@ -69,6 +69,7 @@ class DependencyInjectionTest extends TestCase
         $this->assertInstanceOf(AbstractConnection::class, $container->get(sprintf(Configuration::CONNECTION_SERVICE_NAME, $testName)));
         $this->assertInstanceOf(Producer::class, $container->get(sprintf(Configuration::PRODUCER_SERVICE_NAME, $testName)));
         $this->assertInstanceOf(Consumer::class, $container->get(sprintf(Configuration::CONSUMER_SERVICE_NAME, $testName)));
+        $this->assertInstanceOf(Logger::class, $container->get(Configuration::LOGGER_SERVICE_NAME));
     }
 
     public function testBootstrapEmpty()
@@ -79,7 +80,7 @@ class DependencyInjectionTest extends TestCase
                     'class' => Configuration::class,
                     'connections' => [
                         [
-                            'host' => 'localhost',
+                            'host' => 'unreal',
                         ],
                     ],
                 ],
@@ -98,24 +99,24 @@ class DependencyInjectionTest extends TestCase
     public function testBootstrapProducer()
     {
         $producerName = 'smth';
-        $testContentType = 'non-existing';
-        $testDeliveryMode = 432;
-        $testSerializer = 'serialize';
+        $contentType = 'non-existing';
+        $deliveryMode = 432;
+        $serializer = 'json_encode';
         $this->mockApplication([
             'components' => [
                 'rabbitmq' => [
                     'class' => Configuration::class,
                     'connections' => [
                         [
-                            'host' => 'localhost',
+                            'host' => 'unreal',
                         ],
                     ],
                     'producers' => [
                         [
                             'name' => $producerName,
-                            'contentType' => $testContentType,
-                            'deliveryMode' => $testDeliveryMode,
-                            'serializer' => $testSerializer,
+                            'content_type' => $contentType,
+                            'delivery_mode' => $deliveryMode,
+                            'serializer' => $serializer,
                         ]
                     ],
                 ],
@@ -127,8 +128,91 @@ class DependencyInjectionTest extends TestCase
         // Test producer setter injection
         $producer = $container->get(sprintf(Configuration::PRODUCER_SERVICE_NAME, $producerName));
         $props = $producer->getBasicProperties();
-        $this->assertEquals($testContentType, $props['content_type']);
-        $this->assertEquals($testDeliveryMode, $props['delivery_mode']);
-        $this->assertEquals($testSerializer, $producer->getSerializer());
+        $this->assertEquals($contentType, $props['content_type']);
+        $this->assertEquals($deliveryMode, $props['delivery_mode']);
+        $this->assertEquals($serializer, $producer->getSerializer());
+    }
+
+    public function testBootstrapConsumer()
+    {
+        $consumerName = 'smth';
+        $queueName = 'non-existing';
+        $callback = CallbackMock::class;
+        $deserializer = 'json_decode';
+        $qos = [
+            'prefetch_size' => 11,
+            'prefetch_count' => 11,
+            'global' => true,
+        ];
+        $idleTimeout = 100;
+        $idleTimeoutExitCode = 101;
+        $this->mockApplication([
+            'components' => [
+                'rabbitmq' => [
+                    'class' => Configuration::class,
+                    'connections' => [
+                        [
+                            'host' => 'unreal',
+                        ],
+                    ],
+                    'queues' => [
+                        [
+                            'name' => $queueName,
+                        ]
+                    ],
+                    'consumers' => [
+                        [
+                            'name' => $consumerName,
+                            'callbacks' => [
+                                $queueName => $callback,
+                            ],
+                            'qos' => $qos,
+                            'idle_timeout' => $idleTimeout,
+                            'idle_timeout_exit_code' => $idleTimeoutExitCode,
+                            'deserializer' => $deserializer,
+                        ]
+                    ],
+                ],
+            ],
+        ]);
+        $di = new DependencyInjection();
+        $di->bootstrap(\Yii::$app);
+        $container = \Yii::$container;
+        // Test producer setter injection
+        $consumer = $container->get(sprintf(Configuration::CONSUMER_SERVICE_NAME, $consumerName));
+        $this->assertEquals(array_keys([$queueName => $callback,]), array_keys($consumer->getQueues()));
+        $this->assertEquals($qos, $consumer->getQos());
+        $this->assertEquals($idleTimeout, $consumer->getIdleTimeout());
+        $this->assertEquals($idleTimeoutExitCode, $consumer->getIdleTimeoutExitCode());
+        $this->assertEquals($deserializer, $consumer->getDeserializer());
+    }
+
+    public function testBootstrapLogger()
+    {
+        $options = [
+            'log' => true,
+            'category' => 'some',
+            'print_console' => false,
+            'system_memory' => true,
+        ];
+        $this->mockApplication([
+            'components' => [
+                'rabbitmq' => [
+                    'class' => Configuration::class,
+                    'connections' => [
+                        [
+                            'host' => 'unreal',
+                        ],
+                    ],
+                    'logger' => $options,
+                ],
+            ],
+        ]);
+        $di = new DependencyInjection();
+        $di->bootstrap(\Yii::$app);
+        $container = \Yii::$container;
+        // Test producer setter injection
+        $logger = $container->get(Configuration::LOGGER_SERVICE_NAME);
+        $this->assertEquals($options, $logger->options);
     }
 }

@@ -61,7 +61,7 @@ class ConfigurationTest extends TestCase
             ['At least one connection required', ['connections' => []], InvalidConfigException::class],
             ['Unknown option', array_merge($required, ['unknown' => []]), UnknownPropertyException::class],
             ['Name should be specified on multiple connections', ['connections' => [['host' => 'rabbitmq'],['host' => 'rabbitmq']]], InvalidConfigException::class],
-            ['Wrong autoDeclare option', array_merge($required, ['autoDeclare' => 43]), InvalidConfigException::class],
+            ['Wrong auto-declare option', array_merge($required, ['auto_declare' => 43]), InvalidConfigException::class],
             ['Logger is not an array', array_merge($required, ['logger' => 43]), InvalidConfigException::class],
             ['Unknown option in logger section', array_merge($required, ['logger' => ['unknown' => 43]]), InvalidConfigException::class],
             ['Connections array should be multidimensional and numeric', ['connections' => ['some-key' => 'some-value']], InvalidConfigException::class],

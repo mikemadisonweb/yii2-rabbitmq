@@ -1,11 +1,11 @@
 <?php
 
-namespace mikemadisonweb\rabbitmq\tests\callback;
+namespace mikemadisonweb\rabbitmq\tests\mocks;
 
 use mikemadisonweb\rabbitmq\components\ConsumerInterface;
 use PhpAmqpLib\Message\AMQPMessage;
 
-class CallbackTest implements ConsumerInterface
+class CallbackMock implements ConsumerInterface
 {
     /**
      * @param AMQPMessage $msg
