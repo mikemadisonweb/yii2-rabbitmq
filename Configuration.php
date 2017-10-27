@@ -20,6 +20,7 @@ class Configuration extends Component
     const LOGGER_SERVICE_NAME = 'rabbit_mq.logger';
 
     const DEFAULT_CONNECTION_NAME = 'default';
+    const EXTENSION_CONTROLLER_ALIAS = 'rabbitmq';
     /**
      * Extension configuration default values
      * @var array
@@ -82,6 +83,7 @@ class Configuration extends Component
             [
                 'name' => null,
                 'connection' => self::DEFAULT_CONNECTION_NAME,
+                'safe' => true,
                 'content_type' => 'text/plain',
                 'delivery_mode' => 2,
                 'serializer' => 'serialize',
@@ -99,6 +101,7 @@ class Configuration extends Component
                 ],
                 'idle_timeout' => null,
                 'idle_timeout_exit_code' => null,
+                'proceed_on_exception' => false,
                 'deserializer' => 'unserialize',
             ],
         ],
@@ -176,9 +179,9 @@ class Configuration extends Component
      * Get routing service
      * @return Routing
      */
-    public function getRouting() : Routing
+    public function getRouting(AbstractConnection $connection) : Routing
     {
-        return \Yii::$container->get(self::ROUTING_SERVICE_NAME);
+        return \Yii::$container->get(Configuration::ROUTING_SERVICE_NAME, ['conn' => $connection]);
     }
 
     /**
@@ -254,7 +257,7 @@ class Configuration extends Component
             if (!isset($connection['name'])) {
                 throw new InvalidConfigException('Connection name is required when multiple connections is specified.');
             }
-            if (isset($connection['type']) && !is_subclass_of(isset($connection['type']), AbstractConnection::class)) {
+            if (isset($connection['type']) && !is_subclass_of($connection['type'], AbstractConnection::class)) {
                 throw new InvalidConfigException('Connection type should be a subclass of PhpAmqpLib\Connection\AbstractConnection.');
             }
         }
@@ -299,9 +302,11 @@ class Configuration extends Component
             if (!isset($producer['name'])) {
                 throw new InvalidConfigException('Producer name is required.');
             }
-
             if (isset($producer['connection']) && !$this->isNameExist($this->connections, $producer['connection'])) {
                 throw new InvalidConfigException("Connection `{$producer['connection']}` defined in producer doesn't configured in connections.");
+            }
+            if (isset($producer['safe']) && !is_bool($producer['safe'])) {
+                throw new InvalidConfigException('Producer option safe should be of type boolean.');
             }
             if (!isset($producer['connection']) && !$this->isNameExist($this->connections, self::DEFAULT_CONNECTION_NAME)) {
                 throw new InvalidConfigException("Connection for producer `{$producer['name']}` is required.");
@@ -323,6 +328,12 @@ class Configuration extends Component
             }
             if (!isset($consumer['callbacks']) || empty($consumer['callbacks'])) {
                 throw new InvalidConfigException("No callbacks specified for consumer `{$consumer['name']}`.");
+            }
+            if (isset($consumer['qos']) && !is_array($consumer['qos'])) {
+                throw new InvalidConfigException('Consumer option `qos` should be of type array.');
+            }
+            if (isset($consumer['proceed_on_exception']) && !is_bool($consumer['proceed_on_exception'])) {
+                throw new InvalidConfigException('Consumer option `proceed_on_exception` should be of type boolean.');
             }
             foreach ($consumer['callbacks'] as $queue => $callback) {
                 if (!$this->isNameExist($this->queues, $queue)) {

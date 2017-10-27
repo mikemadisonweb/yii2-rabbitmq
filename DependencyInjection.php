@@ -65,8 +65,8 @@ class DependencyInjection implements BootstrapInterface
      */
     protected function registerRouting(Configuration $config)
     {
-        \Yii::$container->setSingleton(Configuration::ROUTING_SERVICE_NAME, function () use ($config) {
-            $routing = new Routing();
+        \Yii::$container->setSingleton(Configuration::ROUTING_SERVICE_NAME, function ($container, $params) use ($config) {
+            $routing = new Routing($params['conn']);
             \Yii::$container->invoke([$routing, 'setQueues'], [$config->queues]);
             \Yii::$container->invoke([$routing, 'setExchanges'], [$config->exchanges]);
             \Yii::$container->invoke([$routing, 'setBindings'], [$config->bindings]);
@@ -92,14 +92,16 @@ class DependencyInjection implements BootstrapInterface
                 /**
                  * @var $routing Routing
                  */
-                $routing = \Yii::$container->get(Configuration::ROUTING_SERVICE_NAME);
+                $routing = \Yii::$container->get(Configuration::ROUTING_SERVICE_NAME, ['conn' => $connection]);
                 /**
                  * @var $logger Logger
                  */
                 $logger = \Yii::$container->get(Configuration::LOGGER_SERVICE_NAME);
                 $producer = new Producer($connection, $routing, $logger, $autoDeclare);
+                \Yii::$container->invoke([$producer, 'setName'], [$options['name']]);
                 \Yii::$container->invoke([$producer, 'setContentType'], [$options['content_type']]);
                 \Yii::$container->invoke([$producer, 'setDeliveryMode'], [$options['delivery_mode']]);
+                \Yii::$container->invoke([$producer, 'setSafe'], [$options['safe']]);
                 \Yii::$container->invoke([$producer, 'setSerializer'], [$options['serializer']]);
 
                 return $producer;
@@ -124,7 +126,7 @@ class DependencyInjection implements BootstrapInterface
                 /**
                  * @var $routing Routing
                  */
-                $routing = \Yii::$container->get(Configuration::ROUTING_SERVICE_NAME);
+                $routing = \Yii::$container->get(Configuration::ROUTING_SERVICE_NAME, ['conn' => $connection]);
                 /**
                  * @var $logger Logger
                  */
@@ -135,10 +137,12 @@ class DependencyInjection implements BootstrapInterface
                     $callbackClass = $this->getCallbackClass($callback);
                     $queues[$queueName] = [$callbackClass, 'execute'];
                 }
+                \Yii::$container->invoke([$consumer, 'setName'], [$options['name']]);
                 \Yii::$container->invoke([$consumer, 'setQueues'], [$queues]);
                 \Yii::$container->invoke([$consumer, 'setQos'], [$options['qos']]);
                 \Yii::$container->invoke([$consumer, 'setIdleTimeout'], [$options['idle_timeout']]);
                 \Yii::$container->invoke([$consumer, 'setIdleTimeoutExitCode'], [$options['idle_timeout_exit_code']]);
+                \Yii::$container->invoke([$consumer, 'setProceedOnException'], [$options['proceed_on_exception']]);
                 \Yii::$container->invoke([$consumer, 'setDeserializer'], [$options['deserializer']]);
 
                 return $consumer;
@@ -175,6 +179,6 @@ class DependencyInjection implements BootstrapInterface
      */
     private function addControllers(Application $app)
     {
-        $app->controllerMap['rabbitmq'] = RabbitMQController::class;
+        $app->controllerMap[Configuration::EXTENSION_CONTROLLER_ALIAS] = RabbitMQController::class;
     }
 }

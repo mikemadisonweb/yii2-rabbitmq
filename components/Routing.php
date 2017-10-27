@@ -2,6 +2,7 @@
 
 namespace mikemadisonweb\rabbitmq\components;
 
+use mikemadisonweb\rabbitmq\exceptions\RuntimeException;
 use PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Exception\AMQPProtocolChannelException;
 use yii\helpers\ArrayHelper;
@@ -15,6 +16,18 @@ class Routing
     private $exchangesDeclared = [];
     private $queuesDeclared = [];
     private $isDeclared = false;
+    /**
+     * @var $conn AbstractConnection
+     */
+    private $conn;
+
+    /**
+     * @param AbstractConnection $conn
+     */
+    public function __construct(AbstractConnection $conn)
+    {
+        $this->conn = $conn;
+    }
 
     /**
      * @param array $queues
@@ -42,20 +55,19 @@ class Routing
 
     /**
      * Declare all routing entries defined by configuration
-     * @param AbstractConnection $conn
      * @return bool
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
-    public function declareAll(AbstractConnection $conn) : bool
+    public function declareAll() : bool
     {
         if (!$this->isDeclared) {
             foreach (array_keys($this->exchanges) as $name) {
-                $this->declareExchange($conn, $name);
+                $this->declareExchange($name);
             }
             foreach (array_keys($this->queues) as $name) {
-                $this->declareQueue($conn, $name);
+                $this->declareQueue($name);
             }
-            $this->declareBindings($conn);
+            $this->declareBindings();
             $this->isDeclared = true;
 
             return true;
@@ -65,19 +77,18 @@ class Routing
     }
 
     /**
-     * @param AbstractConnection $conn
      * @param $queueName
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
-    public function declareQueue(AbstractConnection $conn, string $queueName)
+    public function declareQueue(string $queueName)
     {
         if(!isset($this->queues[$queueName])) {
-            throw new \RuntimeException("Queue `{$queueName}` is not configured.");
+            throw new RuntimeException("Queue `{$queueName}` is not configured.");
         }
         $queue = $this->queues[$queueName];
         if (!isset($this->queuesDeclared[$queueName])) {
             if (ArrayHelper::isAssociative($queue)) {
-                $conn->channel()->queue_declare(
+                $this->conn->channel()->queue_declare(
                     $queue['name'],
                     $queue['passive'],
                     $queue['durable'],
@@ -89,7 +100,7 @@ class Routing
                 );
             } else {
                 foreach ($queue as $q) {
-                    $conn->channel()->queue_declare(
+                    $this->conn->channel()->queue_declare(
                         $q['name'],
                         $q['passive'],
                         $q['durable'],
@@ -107,76 +118,72 @@ class Routing
 
     /**
      * Create bindings
-     * @param AbstractConnection $conn
      */
-    public function declareBindings(AbstractConnection $conn)
+    public function declareBindings()
     {
         foreach ($this->bindings as $binding) {
             if (isset($binding['queue'])) {
-                $this->bindExchangeToQueue($conn, $binding);
+                $this->bindExchangeToQueue($binding);
             } else {
-                $this->bindExchangeToExchange($conn, $binding);
+                $this->bindExchangeToExchange($binding);
             }
         }
     }
 
     /**
      * Create exchange-to-queue binding
-     * @param AbstractConnection $conn
      * @param array $binding
      */
-    public function bindExchangeToQueue(AbstractConnection $conn, array $binding)
+    public function bindExchangeToQueue(array $binding)
     {
         if (isset($binding['routingKeys']) && count($binding['routingKeys']) > 0) {
             foreach ($binding['routingKeys'] as $routingKey) {
                 // queue binding is not permitted on the default exchange
                 if ('' !== $binding['exchange']) {
-                    $conn->channel()->queue_bind($binding['queue'], $binding['exchange'], $routingKey);
+                    $this->conn->channel()->queue_bind($binding['queue'], $binding['exchange'], $routingKey);
                 }
             }
         } else {
             // queue binding is not permitted on the default exchange
             if ('' !== $binding['exchange']) {
-                $conn->channel()->queue_bind($binding['queue'], $binding['exchange']);
+                $this->conn->channel()->queue_bind($binding['queue'], $binding['exchange']);
             }
         }
     }
 
     /**
      * Create exchange-to-exchange binding
-     * @param AbstractConnection $conn
      * @param array $binding
      */
-    public function bindExchangeToExchange(AbstractConnection $conn, array $binding)
+    public function bindExchangeToExchange(array $binding)
     {
         if (isset($binding['routingKeys']) && count($binding['routingKeys']) > 0) {
             foreach ($binding['routingKeys'] as $routingKey) {
                 // queue binding is not permitted on the default exchange
                 if ('' !== $binding['exchange']) {
-                    $conn->channel()->exchange_bind($binding['toExchange'], $binding['exchange'], $routingKey);
+                    $this->conn->channel()->exchange_bind($binding['toExchange'], $binding['exchange'], $routingKey);
                 }
             }
         } else {
             // queue binding is not permitted on the default exchange
             if ('' !== $binding['exchange']) {
-                $conn->channel()->exchange_bind($binding['toExchange'], $binding['exchange']);
+                $this->conn->channel()->exchange_bind($binding['toExchange'], $binding['exchange']);
             }
         }
     }
 
     /**
-     * @param AbstractConnection $conn
      * @param $exchangeName
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
-    public function declareExchange(AbstractConnection $conn, string $exchangeName)
+    public function declareExchange(string $exchangeName)
     {
         if(!isset($this->exchanges[$exchangeName])) {
-            throw new \RuntimeException("Exchange `{$exchangeName}` is not configured.");
+            throw new RuntimeException("Exchange `{$exchangeName}` is not configured.");
         }
         $exchange = $this->exchanges[$exchangeName];
         if (!isset($this->exchangesDeclared[$exchangeName])) {
-            $conn->channel()->exchange_declare(
+            $this->conn->channel()->exchange_declare(
                 $exchange['name'],
                 $exchange['type'],
                 $exchange['passive'],
@@ -194,67 +201,65 @@ class Routing
     /**
      * Purge the queue
      * @param string $queueName
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
-    public function purgeQueue(AbstractConnection $conn, string $queueName)
+    public function purgeQueue(string $queueName)
     {
         if (!isset($this->queues[$queueName])) {
-            throw new \RuntimeException("Queue {$queueName} is not configured. Purge is aborted.");
+            throw new RuntimeException("Queue {$queueName} is not configured. Purge is aborted.");
         }
-        $conn->channel()->queue_purge($queueName, true);
+        $this->conn->channel()->queue_purge($queueName, true);
     }
 
     /**
      * Delete all configured queues and exchanges
-     * @param AbstractConnection $conn
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
-    public function deleteAll(AbstractConnection $conn)
+    public function deleteAll()
     {
         foreach (array_keys($this->queues) as $name) {
-            $this->deleteQueue($conn, $name);
+            $this->deleteQueue($name);
         }
         foreach (array_keys($this->exchanges) as $name) {
-            $this->deleteExchange($conn, $name);
+            $this->deleteExchange($name);
         }
     }
 
     /**
      * Delete the queue
      * @param string $queueName
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
-    public function deleteQueue(AbstractConnection $conn, string $queueName)
+    public function deleteQueue(string $queueName)
     {
         if (!isset($this->queues[$queueName])) {
-            throw new \RuntimeException("Queue {$queueName} is not configured. Delete is aborted.");
+            throw new RuntimeException("Queue {$queueName} is not configured. Delete is aborted.");
         }
-        $conn->channel()->queue_delete($queueName);
+        $this->conn->channel()->queue_delete($queueName);
     }
 
     /**
      * Delete the queue
      * @param string $exchangeName
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
-    public function deleteExchange(AbstractConnection $conn, string $exchangeName)
+    public function deleteExchange(string $exchangeName)
     {
         if (!isset($this->queues[$exchangeName])) {
-            throw new \RuntimeException("Queue {$exchangeName} is not configured. Delete is aborted.");
+            throw new RuntimeException("Queue {$exchangeName} is not configured. Delete is aborted.");
         }
-        $conn->channel()->exchange_delete($exchangeName);
+        $this->conn->channel()->exchange_delete($exchangeName);
     }
 
     /**
      * Checks whether exchange is already declared in broker
-     * @param AbstractConnection $conn
      * @param string $exchangeName
      * @return bool
      */
-    public function isExchangeExists(AbstractConnection $conn, string $exchangeName) : bool
+    public function isExchangeExists(string $exchangeName) : bool
     {
         try {
-            $conn->channel()->exchange_declare($exchangeName, null, true);
+            $this->conn->channel()->exchange_declare($exchangeName, null, true);
         } catch (AMQPProtocolChannelException $e) {
             return false;
         }
@@ -264,14 +269,13 @@ class Routing
 
     /**
      * Checks whether queue is already declared in broker
-     * @param AbstractConnection $conn
      * @param string $queueName
      * @return bool
      */
-    public function isQueueExists(AbstractConnection $conn, string $queueName) : bool
+    public function isQueueExists(string $queueName) : bool
     {
         try {
-            $conn->channel()->queue_declare($queueName, true);
+            $this->conn->channel()->queue_declare($queueName, true);
         } catch (AMQPProtocolChannelException $e) {
             return false;
         }

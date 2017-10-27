@@ -2,9 +2,8 @@
 
 namespace mikemadisonweb\rabbitmq\components;
 
-use mikemadisonweb\rabbitmq\Configuration;
 use mikemadisonweb\rabbitmq\events\RabbitMQPublisherEvent;
-use PhpAmqpLib\Connection\AbstractConnection;
+use mikemadisonweb\rabbitmq\exceptions\RuntimeException;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 
@@ -17,6 +16,8 @@ class Producer extends BaseRabbitMQ
     protected $contentType;
     protected $deliveryMode;
     protected $serializer;
+    protected $safe;
+    protected $name = 'unnamed';
 
     /**
      * @param $contentType
@@ -63,20 +64,55 @@ class Producer extends BaseRabbitMQ
     }
 
     /**
+     * @return mixed
+     */
+    public function getSafe() : bool
+    {
+        return $this->safe;
+    }
+
+    /**
+     * @param mixed $safe
+     */
+    public function setSafe(bool $safe)
+    {
+        $this->safe = $safe;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @param string $name
+     */
+    public function setName(string $name)
+    {
+        $this->name = $name;
+    }
+
+    /**
      * Publishes the message and merges additional properties with basic properties
      *
      * @param mixed $msgBody
      * @param string $exchangeName
      * @param string $routingKey
      * @param array $headers
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
     public function publish($msgBody, string $exchangeName, string $routingKey = '', array $headers = null)
     {
-        $serialized = false;
+        if ($this->safe && !$this->routing->isExchangeExists($exchangeName)) {
+            throw new RuntimeException("Exchange `{$exchangeName}` does not exist.");
+        }
         if ($this->autoDeclare) {
             $this->routing->declareAll($this->conn);
         }
+        $serialized = false;
         if (!is_string($msgBody)) {
             $msgBody = call_user_func($this->serializer, $msgBody);
             $serialized = true;

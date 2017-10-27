@@ -2,6 +2,7 @@
 
 namespace mikemadisonweb\rabbitmq\tests;
 
+use mikemadisonweb\rabbitmq\DependencyInjection;
 use Yii;
 use yii\helpers\ArrayHelper;
 
@@ -127,5 +128,17 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
             $property->setAccessible(false);
         }
         return $result;
+    }
+
+    /**
+     * Load extension to test app instance
+     * @param array $config
+     * @throws \mikemadisonweb\rabbitmq\exceptions\InvalidConfigException
+     */
+    protected function loadExtension(array $config)
+    {
+        $this->mockApplication($config);
+        $di = new DependencyInjection();
+        $di->bootstrap(\Yii::$app);
     }
 }
