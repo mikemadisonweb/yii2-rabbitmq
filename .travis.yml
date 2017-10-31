@@ -5,7 +5,7 @@ php:
   - 7.1
 
 install:
-  - composer global require "fxp/composer-asset-plugin:~1.0.0" --no-plugins
+  - composer global require fxp/composer-asset-plugin --no-plugins
   - composer install --no-interaction --prefer-source
 
 script: vendor/bin/phpunit
