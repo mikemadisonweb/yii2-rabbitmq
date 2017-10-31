@@ -11,16 +11,6 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
     public static $params;
 
     /**
-     * Clean up after test case.
-     */
-    public static function tearDownAfterClass()
-    {
-        parent::tearDownAfterClass();
-        $logger = Yii::getLogger();
-        $logger->flush();
-    }
-
-    /**
      * Clean up after test.
      * By default the application created with [[mockApplication]] will be destroyed.
      */

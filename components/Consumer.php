@@ -238,7 +238,7 @@ class Consumer extends BaseRabbitMQ
     public function restartDaemon()
     {
         $this->stopConsuming();
-        $this->reconnect();
+        $this->renew();
         $this->resetConsumed();
         $this->logger->printInfo("\nConsumer has been restarted.\n", Console::FG_YELLOW);
         $this->consume($this->target);
@@ -367,6 +367,12 @@ class Consumer extends BaseRabbitMQ
      */
     protected function sendResult(AMQPMessage $msg, $processFlag)
     {
+        // true in testing environment
+        if (!isset($msg->delivery_info['channel'])) {
+            return;
+        }
+
+        // respond to the broker with appropriate reply code
         if ($processFlag === ConsumerInterface::MSG_REQUEUE || false === $processFlag) {
             // Reject and requeue message to RabbitMQ
             $msg->delivery_info['channel']->basic_reject($msg->delivery_info['delivery_tag'], true);

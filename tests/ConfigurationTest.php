@@ -2,13 +2,12 @@
 
 namespace mikemadisonweb\rabbitmq\tests;
 
+use mikemadisonweb\rabbitmq\components\Routing;
 use mikemadisonweb\rabbitmq\Configuration;
 use mikemadisonweb\rabbitmq\exceptions\InvalidConfigException;
+use PhpAmqpLib\Connection\AbstractConnection;
 use yii\base\UnknownPropertyException;
 
-/**
- * @covers Configuration
- */
 class ConfigurationTest extends TestCase
 {
     protected $invalidConfig = [];
@@ -35,6 +34,9 @@ class ConfigurationTest extends TestCase
             ],
         ]);
         $this->assertInstanceOf(Configuration::class, \Yii::$app->rabbitmq->getConfig());
+        $conn = \Yii::$app->rabbitmq->getConnection();
+        $this->assertInstanceOf(AbstractConnection::class, $conn);
+        $this->assertInstanceOf(Routing::class, \Yii::$app->rabbitmq->getRouting($conn));
     }
 
     /**

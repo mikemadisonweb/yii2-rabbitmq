@@ -38,7 +38,7 @@ class AbstractConnectionFactory
             false,      // insist
             'AMQPLAIN', // login_method
             null,       // login_response
-            'ru_RU',    // locale
+            'en_EN',    // locale
             $this->_parameters['connection_timeout'],
             $this->_parameters['read_write_timeout'],
             $this->_parameters['ssl_context'],
@@ -61,7 +61,6 @@ class AbstractConnectionFactory
         if ($url === false || !isset($url['scheme']) || $url['scheme'] !== 'amqp') {
             throw new \InvalidArgumentException('Malformed parameter "url".');
         }
-        // See https://www.rabbitmq.com/uri-spec.html
         if (isset($url['host'])) {
             $parameters['host'] = urldecode($url['host']);
         }

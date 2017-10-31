@@ -158,9 +158,6 @@ class DependencyInjection implements BootstrapInterface
      */
     private function getCallbackClass(string $callbackName) : ConsumerInterface
     {
-        if (!is_string($callbackName)) {
-            throw new InvalidConfigException('Consumer `callback` parameter value should be a class name or service name in DI container.');
-        }
         if (!class_exists($callbackName)) {
             $callbackClass = \Yii::$container->get($callbackName);
         } else {

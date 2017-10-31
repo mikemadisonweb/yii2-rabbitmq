@@ -265,6 +265,14 @@ class RabbitMQController extends Controller
      */
     public function actionPurgeQueue(string $queueName, string $connectionName = Configuration::DEFAULT_CONNECTION_NAME) : int
     {
+        if ($this->interactive) {
+            $input = Console::prompt('Are you sure you want to delete all messages inside that queue?', ['default'=>'yes']);
+            if ($input !== 'yes') {
+                $this->stderr(Console::ansiFormat("Aborted.\n", [Console::FG_RED]));
+                return self::EXIT_CODE_ERROR;
+            }
+        }
+
         $conn = \Yii::$app->rabbitmq->getConnection($connectionName);
         $routing = \Yii::$app->rabbitmq->getRouting($conn);
         $routing->purgeQueue($queueName);

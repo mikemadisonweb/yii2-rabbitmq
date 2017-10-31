@@ -61,12 +61,12 @@ abstract class BaseRabbitMQ
         }
     }
 
-    public function reconnect()
+    public function renew()
     {
         if (!$this->conn->isConnected()) {
             return;
         }
-        $this->conn->reconnect();
+        $this->conn->renew();
     }
 
     /**
@@ -78,31 +78,5 @@ abstract class BaseRabbitMQ
             $this->ch = $this->conn->channel();
         }
         return $this->ch;
-    }
-
-    /**
-     * @param  AMQPChannel $ch
-     *
-     * @return void
-     */
-    public function setChannel(AMQPChannel $ch)
-    {
-        $this->ch = $ch;
-    }
-
-    /**
-     * @return array
-     */
-    public function getLogger()
-    {
-        return $this->logger;
-    }
-
-    /**
-     * @param array $logger
-     */
-    public function setLogger(array $logger)
-    {
-        $this->logger = $logger;
     }
 }

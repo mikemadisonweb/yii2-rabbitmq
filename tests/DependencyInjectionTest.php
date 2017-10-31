@@ -7,6 +7,7 @@ use mikemadisonweb\rabbitmq\components\{
 };
 use mikemadisonweb\rabbitmq\Configuration;
 use mikemadisonweb\rabbitmq\controllers\RabbitMQController;
+use mikemadisonweb\rabbitmq\exceptions\InvalidConfigException;
 use PhpAmqpLib\Connection\AbstractConnection;
 
 class DependencyInjectionTest extends TestCase
@@ -25,7 +26,7 @@ class DependencyInjectionTest extends TestCase
                     'connections' => [
                         [
                             'name' => $name,
-                            'host' => 'unreal',
+                            'url' => 'amqp://user:pass@host:5432/vhost?query',
                         ],
                     ],
                     'exchanges' => [
@@ -83,7 +84,7 @@ class DependencyInjectionTest extends TestCase
                     'class' => Configuration::class,
                     'connections' => [
                         [
-                            'host' => 'unreal',
+                            'host' => 'somehost',
                         ],
                     ],
                 ],
@@ -95,6 +96,24 @@ class DependencyInjectionTest extends TestCase
         $router = $container->get(Configuration::ROUTING_SERVICE_NAME, ['conn' => $conn]);
         // Declare nothing as nothing was configured
         $this->assertTrue($router->declareAll($conn));
+    }
+
+    public function testBootstrapWrongUrl()
+    {
+        $this->loadExtension([
+            'components' => [
+                'rabbitmq' => [
+                    'class' => Configuration::class,
+                    'connections' => [
+                        [
+                            'url' => 'https://www.rabbitmq.com/uri-spec.html',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+        $this->expectException(\InvalidArgumentException::class);
+        \Yii::$app->rabbitmq->getConnection();
     }
 
     public function testBootstrapProducer()
@@ -183,7 +202,6 @@ class DependencyInjectionTest extends TestCase
                 ],
             ],
         ]);
-        // Test producer setter injection
         $consumer = \Yii::$container->get(sprintf(Configuration::CONSUMER_SERVICE_NAME, $consumerName));
         $this->assertSame($consumerName, $consumer->getName());
         $this->assertSame(array_keys([$queueName => $callback,]), array_keys($consumer->getQueues()));
@@ -215,8 +233,49 @@ class DependencyInjectionTest extends TestCase
                 ],
             ],
         ]);
-        // Test producer setter injection
         $logger = \Yii::$container->get(Configuration::LOGGER_SERVICE_NAME);
         $this->assertSame($options, $logger->options);
+    }
+
+    public function testValidateCallbackInterface()
+    {
+        $callbackAlias = 'callback_mock';
+        $callbackName = 'WrongCallbackMock';
+        $queueName = 'queue';
+        $consumerName = 'consumer';
+        // not implementing interface
+        $this
+            ->getMockBuilder(\AnotherInterface::class)
+            ->setMockClassName($callbackName)
+            ->disableOriginalConstructor()
+            ->getMock();
+        \Yii::$container->setSingleton($callbackAlias, ['class' => $callbackName]);
+        $this->loadExtension([
+            'components' => [
+                'rabbitmq' => [
+                    'class' => Configuration::class,
+                    'connections' => [
+                        [
+                            'host' => 'unreal',
+                        ],
+                    ],
+                    'queues' => [
+                        [
+                            'name' => $queueName,
+                        ]
+                    ],
+                    'consumers' => [
+                        [
+                            'name' => $consumerName,
+                            'callbacks' => [
+                                $queueName => $callbackAlias,
+                            ],
+                        ]
+                    ],
+                ],
+            ],
+        ]);
+        $this->expectException(InvalidConfigException::class);
+        \Yii::$app->rabbitmq->getConsumer($consumerName);
     }
 }

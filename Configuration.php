@@ -293,7 +293,7 @@ class Configuration extends Component
             if ((!isset($binding['queue']) && !isset($binding['toExchange'])) || isset($binding['queue'], $binding['toExchange'])) {
                 throw new InvalidConfigException('Either `queue` or `toExchange` options should be specified to create binding.');
             }
-            if (!$this->isNameExist($this->queues, $binding['queue'])) {
+            if (isset($binding['queue']) && !$this->isNameExist($this->queues, $binding['queue'])) {
                 throw new InvalidConfigException("`{$binding['queue']}` defined in binding doesn't configured in queues.");
             }
         }
@@ -374,6 +374,9 @@ class Configuration extends Component
         foreach ($keys as $key) {
             $names = [];
             foreach ($this->$key as $item) {
+                if (!isset($item['name'])) {
+                    $item['name'] = '';
+                }
                 if (isset($names[$item['name']])) {
                     throw new InvalidConfigException("Duplicate name `{$item['name']}` in {$key}");
                 }
@@ -435,6 +438,14 @@ class Configuration extends Component
      */
     private function isNameExist(array $multidimentional, string $name)
     {
+        if($name == '') {
+            foreach ($multidimentional as $item) {
+                if (!isset($item['name'])) {
+                    return true;
+                }
+            }
+            return false;
+        }
         $key = array_search($name, array_column($multidimentional, 'name'), true);
         if (is_int($key)) {
             return true;

@@ -5,6 +5,9 @@ namespace mikemadisonweb\rabbitmq\components;
 use PhpAmqpLib\Message\AMQPMessage;
 use yii\helpers\Console;
 
+/**
+ * @codeCoverageIgnore
+ */
 class Logger
 {
     public $options;
@@ -46,7 +49,7 @@ class Logger
     /**
      * @param \Exception $e
      */
-    public function printErrorToConsole(\Exception $e)
+    public function printError(\Exception $e)
     {
         if (!$this->options['print_console']) {
             return;
