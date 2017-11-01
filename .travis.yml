@@ -14,3 +14,8 @@ script: vendor/bin/phpunit
 
 after_success:
   - travis_retry php vendor/bin/coveralls -v
+
+cache:
+  directories:
+  - vendor
+  - $HOME/.cache/composer

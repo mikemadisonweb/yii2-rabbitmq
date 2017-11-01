@@ -34,9 +34,6 @@ class ConfigurationTest extends TestCase
             ],
         ]);
         $this->assertInstanceOf(Configuration::class, \Yii::$app->rabbitmq->getConfig());
-        $conn = \Yii::$app->rabbitmq->getConnection();
-        $this->assertInstanceOf(AbstractConnection::class, $conn);
-        $this->assertInstanceOf(Routing::class, \Yii::$app->rabbitmq->getRouting($conn));
     }
 
     /**
