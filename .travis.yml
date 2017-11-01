@@ -6,6 +6,7 @@ php:
 
 install:
   - composer clear-cache
+  - composer config github-oauth.github.com ${GITHUB_TOKEN};
   - composer global require fxp/composer-asset-plugin
   - composer install --no-interaction --prefer-dist
 
