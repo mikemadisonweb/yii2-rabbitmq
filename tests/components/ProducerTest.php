@@ -170,7 +170,6 @@ class ProducerTest extends TestCase
             ['String!', 'String!'],
             [['array'], 'a:1:{i:0;s:5:"array";}'],
             [1, 'i:1;'],
-            [1.1, 'd:1.1;'],
             [null, 'N;'],
             [new \StdClass(), 'O:8:"stdClass":0:{}'],
         ];

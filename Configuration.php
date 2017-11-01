@@ -151,7 +151,6 @@ class Configuration extends Component
         if ('' === $connectionName) {
             $connectionName = self::DEFAULT_CONNECTION_NAME;
         }
-
         return \Yii::$container->get(sprintf(self::CONNECTION_SERVICE_NAME, $connectionName));
     }
 
