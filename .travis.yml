@@ -11,3 +11,6 @@ install:
   - composer install --no-interaction --prefer-dist
 
 script: vendor/bin/phpunit
+
+after_success:
+  - travis_retry php vendor/bin/coveralls -v

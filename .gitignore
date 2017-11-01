@@ -12,9 +12,6 @@ nbproject
 # windows thumbnail cache
 Thumbs.db
 
-# composer vendor dir
-/mikemadisonweb/vendor
-
 composer.lock
 vendor
-coverage
+build
