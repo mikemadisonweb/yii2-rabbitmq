@@ -106,11 +106,11 @@ class Producer extends BaseRabbitMQ
      */
     public function publish($msgBody, string $exchangeName, string $routingKey = '', array $headers = null)
     {
-        if ($this->safe && !$this->routing->isExchangeExists($exchangeName)) {
-            throw new RuntimeException("Exchange `{$exchangeName}` does not exist.");
-        }
         if ($this->autoDeclare) {
             $this->routing->declareAll($this->conn);
+        }
+        if ($this->safe && !$this->routing->isExchangeExists($exchangeName)) {
+            throw new RuntimeException("Exchange `{$exchangeName}` does not exist.");
         }
         $serialized = false;
         if (!is_string($msgBody)) {

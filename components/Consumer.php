@@ -187,11 +187,11 @@ class Consumer extends BaseRabbitMQ
      */
     public function consume($msgAmount = 0) : int
     {
-        $this->setQosOptions();
-        $this->target = $msgAmount;
         if ($this->autoDeclare) {
             $this->routing->declareAll($this->conn);
         }
+        $this->setQosOptions();
+        $this->target = $msgAmount;
         $this->startConsuming();
         // At the end of the callback execution
         while (count($this->getChannel()->callbacks)) {
