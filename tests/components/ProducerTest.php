@@ -44,7 +44,7 @@ class ProducerTest extends TestCase
             ->method('channel')
             ->willReturn($channel);
         $routing = $this->createMock(Routing::class);
-        $routing->expects($this->once())
+        $routing->expects($this->exactly(2))
             ->method('declareAll');
         $routing->expects($this->exactly(2))
             ->method('isExchangeExists')
