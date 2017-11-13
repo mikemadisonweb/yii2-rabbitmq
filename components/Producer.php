@@ -110,7 +110,7 @@ class Producer extends BaseRabbitMQ
             $this->routing->declareAll($this->conn);
         }
         if ($this->safe && !$this->routing->isExchangeExists($exchangeName)) {
-            throw new RuntimeException("Exchange `{$exchangeName}` does not exist.");
+            throw new RuntimeException("Exchange `{$exchangeName}` does not declared in broker (You see this message because safe mode is ON).");
         }
         $serialized = false;
         if (!is_string($msgBody)) {
