@@ -25,7 +25,7 @@ to the require section of your `composer.json` file.
 
 Configuration
 -------------
-This extension facilitates creation of RabbitMQ [producers and consumers](https://www.rabbitmq.com/tutorials/tutorial-three-php.html) to meet your specific needs. This is an example basic config:
+This extension facilitates the creation of RabbitMQ [producers and consumers](https://www.rabbitmq.com/tutorials/tutorial-three-php.html) to meet your specific needs. This is an example basic config:
 ```php
 <?php
 return [
@@ -116,7 +116,7 @@ If you need several consumers you can list respective entries in the configurati
 
 Be sure that all queues and exchanges are defined in corresponding bindings, it's up to you to set up correct message routing.
 #### Lifecycle events
-There are also couple of lifecycle events implemented: before_consume, after_consume, before_publish, after_publish. You can use them for any additional work you need to do before or after message been consumed/published. For example, reopen database connection for it not to be closed by timeout as a consumer is a long-running process: 
+There are also some lifecycle events implemented: before_consume, after_consume, before_publish, after_publish. You can use them for any additional work you need to do before or after message been consumed/published. For example, reopen database connection for it not to be closed by a timeout as a consumer is a long-running process: 
 ```php
 <?php
 // config/main.php
@@ -335,18 +335,18 @@ parameter | required | type | default | comments
 --- | --- | --- | --- | ---
 name | yes | string |  | The exchange name consists of a non-empty sequence of these characters: letters, digits, hyphen, underscore, period, or colon.
 type | yes | string |  | Type of the exchange, possible values are `direct`, `fanout`, `topic` and `headers`.
-declare | no | boolean | true | Whether to declare a exchange on sending or consuming messages.
+declare | no | boolean | true | Whether to declare an exchange on sending or consuming messages.
 passive | no | boolean | false | If set to true, the server will reply with Declare-Ok if the exchange already exists with the same name, and raise an error if not. The client can use this to check whether an exchange exists without modifying the server state. When set, all other method fields except name and no-wait are ignored. A declare with both passive and no-wait has no effect.
 durable | no | boolean | false | Durable exchanges remain active when a server restarts. Non-durable exchanges (transient exchanges) are purged if/when a server restarts.
-auto_delete | no | boolean | true | If set to true, the exchange would be deleted when no queues are binded to it anymore.
+auto_delete | no | boolean | true | If set to true, the exchange would be deleted when no queues are bound to it anymore.
 internal | no | boolean | false | Internal exchange may not be used directly by publishers, but only when bound to other exchanges.
-nowait | no | boolean | false | Client may send next request immediately after sending the first one, no waiting for reply is required
+nowait | no | boolean | false | Client may send next request immediately after sending the first one, no waiting for the reply is required
 arguments | no | array | null | A set of arguments for the declaration.
 ticket | no | integer | null | Access ticket
 
 Good use-case of the `arguments` parameter usage can be a creation of a [dead-letter-exchange](https://github.com/php-amqplib/php-amqplib/blob/master/demo/queue_arguments.php#L17).
 #####  Queue
-As for the queue declaration, all parameters are optional. Even if you does not provide a name for your queue server will generate unique name for you: 
+As for the queue declaration, all parameters are optional. Even if you do not provide a name for your queue server will generate a unique name for you: 
 
 parameter | required | type | default | comments
 --- | --- | --- | --- | ---
@@ -356,11 +356,11 @@ passive | no | boolean | false | If set to true, the server will reply with Decl
 durable | no | boolean | false | Durable queues remain active when a server restarts. Non-durable queues (transient queues) are purged if/when a server restarts.
 auto_delete | no | boolean | true | If set to true, the queue is deleted when all consumers have finished using it. 
 exclusive | no | boolean | false | Exclusive queues may only be accessed by the current connection, and are deleted when that connection closes. Passive declaration of an exclusive queue by other connections are not allowed.
-nowait | no | boolean | false | Client may send next request immediately after sending the first one, no waiting for reply is required
+nowait | no | boolean | false | Client may send next request immediately after sending the first one, no waiting for the reply is required
 arguments | false | array | null | A set of arguments for the declaration. 
 ticket | no | integer | null | Access ticket
 
-Complete explanation about options, their defaults and valuable details can be found in [AMQP 0-9-1 Reference Guide](http://www.rabbitmq.com/amqp-0-9-1-reference.html). 
+A complete explanation about options, their defaults, and valuable details can be found in [AMQP 0-9-1 Reference Guide](http://www.rabbitmq.com/amqp-0-9-1-reference.html). 
 
 Beware that not all these options are allowed to be changed 'on-the-fly', in other words after queue or exchange had already been created. Otherwise, you will receive an error.
 
