@@ -101,10 +101,11 @@ class Producer extends BaseRabbitMQ
      * @param mixed $msgBody
      * @param string $exchangeName
      * @param string $routingKey
+     * @param array $additionalProperties
      * @param array $headers
      * @throws RuntimeException
      */
-    public function publish($msgBody, string $exchangeName, string $routingKey = '', array $headers = null)
+    public function publish($msgBody, string $exchangeName, string $routingKey = '', array $additionalProperties = [], array $headers = null)
     {
         if ($this->autoDeclare) {
             $this->routing->declareAll($this->conn);
@@ -117,7 +118,7 @@ class Producer extends BaseRabbitMQ
             $msgBody = call_user_func($this->serializer, $msgBody);
             $serialized = true;
         }
-        $msg = new AMQPMessage($msgBody, $this->getBasicProperties());
+        $msg = new AMQPMessage($msgBody, array_merge($this->getBasicProperties(), $additionalProperties));
 
         if (!empty($headers) || $serialized) {
             if ($serialized) {
