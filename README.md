@@ -66,7 +66,7 @@ return [
             [
                 'queue' => 'YOUR_QUEUE_NAME',
                 'exchange' => 'YOUR_EXCHANGE_NAME',
-                'routing_keys' => ['YOUR_ROUTING_KEY'],
+                'routingKeys' => ['YOUR_ROUTING_KEY'],
             ],
         ],
         'producers' => [
