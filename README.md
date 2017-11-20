@@ -179,7 +179,7 @@ Extension provides several console commands:
 
 To start a consumer:
 ```
-yii rabbitmq-consumer/single YOUR_CONSUMER_NAME
+yii rabbitmq/consume YOUR_CONSUMER_NAME
 ```
 In this case, you can use process control system, like Supervisor, to restart consumer process and this way keep your worker run continuously.
 #### Message limit
