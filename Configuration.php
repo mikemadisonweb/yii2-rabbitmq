@@ -75,8 +75,8 @@ class Configuration extends Component
             [
                 'exchange' => null,
                 'queue' => null,
-                'toExchange' => null,
-                'routingKeys' => [],
+                'to_exchange' => null,
+                'routing_keys' => [],
             ],
         ],
         'producers' => [
@@ -287,11 +287,11 @@ class Configuration extends Component
             if (!$this->isNameExist($this->exchanges, $binding['exchange'])) {
                 throw new InvalidConfigException("`{$binding['exchange']}` defined in binding doesn't configured in exchanges.");
             }
-            if (isset($binding['routingKeys']) && !is_array($binding['routingKeys'])) {
-                throw new InvalidConfigException('Option `routingKeys` should be an array.');
+            if (isset($binding['routing_keys']) && !is_array($binding['routing_keys'])) {
+                throw new InvalidConfigException('Option `routing_keys` should be an array.');
             }
-            if ((!isset($binding['queue']) && !isset($binding['toExchange'])) || isset($binding['queue'], $binding['toExchange'])) {
-                throw new InvalidConfigException('Either `queue` or `toExchange` options should be specified to create binding.');
+            if ((!isset($binding['queue']) && !isset($binding['to_exchange'])) || isset($binding['queue'], $binding['to_exchange'])) {
+                throw new InvalidConfigException('Either `queue` or `to_exchange` options should be specified to create binding.');
             }
             if (isset($binding['queue']) && !$this->isNameExist($this->queues, $binding['queue'])) {
                 throw new InvalidConfigException("`{$binding['queue']}` defined in binding doesn't configured in queues.");

@@ -66,7 +66,7 @@ return [
             [
                 'queue' => 'YOUR_QUEUE_NAME',
                 'exchange' => 'YOUR_EXCHANGE_NAME',
-                'routingKeys' => ['YOUR_ROUTING_KEY'],
+                'routing_keys' => ['YOUR_ROUTING_KEY'],
             ],
         ],
         'producers' => [
@@ -290,8 +290,8 @@ $rabbitmq_defaults = [
             [
                 'exchange' => null,
                 'queue' => null,
-                'toExchange' => null,
-                'routingKeys' => [],
+                'to_exchange' => null,
+                'routing_keys' => [],
             ],
         ],
         'producers' => [

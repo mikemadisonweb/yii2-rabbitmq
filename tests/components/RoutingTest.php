@@ -43,12 +43,12 @@ class RoutingTest extends TestCase
                         [
                             'queue' => $name,
                             'exchange' => $name,
-                            'routingKeys' => [$name],
+                            'routing_keys' => [$name],
                         ],
                         [
                             'exchange' => $name,
-                            'toExchange' => $name,
-                            'routingKeys' => [$name],
+                            'to_exchange' => $name,
+                            'routing_keys' => [$name],
                         ],
                         [
                             'queue' => $name,
@@ -56,7 +56,7 @@ class RoutingTest extends TestCase
                         ],
                         [
                             'exchange' => $name,
-                            'toExchange' => $name,
+                            'to_exchange' => $name,
                         ],
                         [
                             'queue' => '',

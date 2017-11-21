@@ -45,7 +45,7 @@ class DependencyInjectionTest extends TestCase
                         [
                             'queue' => $name,
                             'exchange' => $name,
-                            'routingKeys' => [$name],
+                            'routing_keys' => [$name],
                         ],
                     ],
                     'producers' => [

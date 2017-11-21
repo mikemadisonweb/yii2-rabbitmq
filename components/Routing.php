@@ -136,8 +136,8 @@ class Routing
      */
     public function bindExchangeToQueue(array $binding)
     {
-        if (isset($binding['routingKeys']) && count($binding['routingKeys']) > 0) {
-            foreach ($binding['routingKeys'] as $routingKey) {
+        if (isset($binding['routing_keys']) && count($binding['routing_keys']) > 0) {
+            foreach ($binding['routing_keys'] as $routingKey) {
                 // queue binding is not permitted on the default exchange
                 if ('' !== $binding['exchange']) {
                     $this->conn->channel()->queue_bind($binding['queue'], $binding['exchange'], $routingKey);
@@ -157,17 +157,17 @@ class Routing
      */
     public function bindExchangeToExchange(array $binding)
     {
-        if (isset($binding['routingKeys']) && count($binding['routingKeys']) > 0) {
-            foreach ($binding['routingKeys'] as $routingKey) {
+        if (isset($binding['routing_keys']) && count($binding['routing_keys']) > 0) {
+            foreach ($binding['routing_keys'] as $routingKey) {
                 // queue binding is not permitted on the default exchange
                 if ('' !== $binding['exchange']) {
-                    $this->conn->channel()->exchange_bind($binding['toExchange'], $binding['exchange'], $routingKey);
+                    $this->conn->channel()->exchange_bind($binding['to_exchange'], $binding['exchange'], $routingKey);
                 }
             }
         } else {
             // queue binding is not permitted on the default exchange
             if ('' !== $binding['exchange']) {
-                $this->conn->channel()->exchange_bind($binding['toExchange'], $binding['exchange']);
+                $this->conn->channel()->exchange_bind($binding['to_exchange'], $binding['exchange']);
             }
         }
     }
