@@ -145,7 +145,7 @@ class Producer extends BaseRabbitMQ
             $msg,
             [
                 'exchange' => $exchangeName,
-                'routing_key' => $routingKey,
+                'routingKey' => $routingKey,
             ]
         );
     }
