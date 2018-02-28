@@ -239,13 +239,13 @@ class Routing
     }
 
     /**
-     * Delete the queue
+     * Delete the exchange
      * @param string $exchangeName
      * @throws RuntimeException
      */
     public function deleteExchange(string $exchangeName)
     {
-        if (!isset($this->queues[$exchangeName])) {
+        if (!isset($this->exchanges[$exchangeName])) {
             throw new RuntimeException("Queue {$exchangeName} is not configured. Delete is aborted.");
         }
         $this->conn->channel()->exchange_delete($exchangeName);
