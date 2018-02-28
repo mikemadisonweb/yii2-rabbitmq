@@ -246,7 +246,7 @@ class Routing
     public function deleteExchange(string $exchangeName)
     {
         if (!isset($this->exchanges[$exchangeName])) {
-            throw new RuntimeException("Queue {$exchangeName} is not configured. Delete is aborted.");
+            throw new RuntimeException("Exchange {$exchangeName} is not configured. Delete is aborted.");
         }
         $this->conn->channel()->exchange_delete($exchangeName);
     }
