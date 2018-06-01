@@ -8,6 +8,7 @@ This documentation is relevant for the version 2.\*, which require PHP version >
 [![License](https://poser.pugx.org/mikemadisonweb/yii2-rabbitmq/license)](https://packagist.org/packages/mikemadisonweb/yii2-rabbitmq)
 [![Build Status](https://travis-ci.org/mikemadisonweb/yii2-rabbitmq.svg?branch=master)](https://travis-ci.org/mikemadisonweb/yii2-rabbitmq)
 [![Coverage Status](https://coveralls.io/repos/github/mikemadisonweb/yii2-rabbitmq/badge.svg?branch=master)](https://coveralls.io/github/mikemadisonweb/yii2-rabbitmq?branch=master)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmikemadisonweb%2Fyii2-rabbitmq.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmikemadisonweb%2Fyii2-rabbitmq?ref=badge_shield)
 
 Installation
 ------------
@@ -378,3 +379,7 @@ Since version 1.\* this extension was completely rewritten internally and can be
 - New console commands added to manipulate with routing schema
 - All data types are supported for message payload
 - Consumer handles control signals in a predictable manner
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmikemadisonweb%2Fyii2-rabbitmq.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmikemadisonweb%2Fyii2-rabbitmq?ref=badge_large)
