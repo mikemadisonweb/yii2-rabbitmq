@@ -153,7 +153,7 @@ return [
         'rabbitmq'  => [
             // ...
             'logger' => [
-                'enable' => true,
+                'log' => true,
                 'category' => 'application',
                 'print_console' => false,
                 'system_memory' => false,
@@ -163,7 +163,7 @@ return [
     ],
 ];
 ```
-Logger enabled by default, but it log messages into main application log. You can change that by setting your own log target and specify corresponding category name, like 'amqp' is set above. Option 'print_console' disabled by default, it give you additional information while debugging a consumer in you console.
+Logger disabled by default. When enabled it will log messages into main application log or to your own log target if you specify corresponding category name. Option 'print_console' gives you additional information while debugging a consumer in you console.
 
 Console commands
 -------------
