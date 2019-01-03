@@ -88,7 +88,7 @@ return [
     ],
 ];
 ```
-To use this extension you should be familiar with the basic concepts of RabbitMQ. If you are not confident in your knowledge I suggest reading [this article](https://mikemadisonweb.github.io/2017/05/04/tldr-series-rabbitmq/).
+To use this extension you should be familiar with the basic concepts of RabbitMQ. If you are not confident in your knowledge I suggest reading [this article](https://mikemadisonweb.github.io/2017/05/03/tldr-series-rabbitmq/).
 
 The 'callback' parameter can be a class name or a service name from [dependency injection container](http://www.yiiframework.com/doc-2.0/yii-di-container.html). Starting from Yii version 2.0.11 you can configure your container like this:
 ```php
@@ -271,7 +271,6 @@ $rabbitmq_defaults = [
                 'nowait' => false,
                 'arguments' => null,
                 'ticket' => null,
-                'declare' => true,
             ],
         ],
         'queues' => [
@@ -284,7 +283,6 @@ $rabbitmq_defaults = [
                 'nowait' => false,
                 'arguments' => null,
                 'ticket' => null,
-                'declare' => true,
             ],
         ],
         'bindings' => [
@@ -336,7 +334,6 @@ parameter | required | type | default | comments
 --- | --- | --- | --- | ---
 name | yes | string |  | The exchange name consists of a non-empty sequence of these characters: letters, digits, hyphen, underscore, period, or colon.
 type | yes | string |  | Type of the exchange, possible values are `direct`, `fanout`, `topic` and `headers`.
-declare | no | boolean | true | Whether to declare an exchange on sending or consuming messages.
 passive | no | boolean | false | If set to true, the server will reply with Declare-Ok if the exchange already exists with the same name, and raise an error if not. The client can use this to check whether an exchange exists without modifying the server state. When set, all other method fields except name and no-wait are ignored. A declare with both passive and no-wait has no effect.
 durable | no | boolean | false | Durable exchanges remain active when a server restarts. Non-durable exchanges (transient exchanges) are purged if/when a server restarts.
 auto_delete | no | boolean | true | If set to true, the exchange would be deleted when no queues are bound to it anymore.
@@ -352,7 +349,6 @@ As for the queue declaration, all parameters are optional. Even if you do not pr
 parameter | required | type | default | comments
 --- | --- | --- | --- | ---
 name | no | string | '' | The queue name can be empty, or a sequence of these characters: letters, digits, hyphen, underscore, period, or colon. 
-declare | no | boolean | true | Whether to declare a queue on sending or consuming messages.
 passive | no | boolean | false | If set to true, the server will reply with Declare-Ok if the queue already exists with the same name, and raise an error if not.
 durable | no | boolean | false | Durable queues remain active when a server restarts. Non-durable queues (transient queues) are purged if/when a server restarts.
 auto_delete | no | boolean | true | If set to true, the queue is deleted when all consumers have finished using it. 
