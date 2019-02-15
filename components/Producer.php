@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace mikemadisonweb\rabbitmq\components;
 
@@ -145,7 +145,7 @@ class Producer extends BaseRabbitMQ
             $msg,
             [
                 'exchange' => $exchangeName,
-                'routingKey' => $routingKey,
+                'routing_key' => $routingKey,
             ]
         );
     }

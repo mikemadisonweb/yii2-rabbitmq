@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace mikemadisonweb\rabbitmq\components;
 
@@ -66,7 +66,7 @@ abstract class BaseRabbitMQ
         if (!$this->conn->isConnected()) {
             return;
         }
-        $this->conn->renew();
+        $this->conn->reconnect();
     }
 
     /**
@@ -77,6 +77,7 @@ abstract class BaseRabbitMQ
         if (empty($this->ch) || null === $this->ch->getChannelId()) {
             $this->ch = $this->conn->channel();
         }
+
         return $this->ch;
     }
 }

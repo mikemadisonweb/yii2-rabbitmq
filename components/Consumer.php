@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace mikemadisonweb\rabbitmq\components;
 
@@ -237,10 +237,12 @@ class Consumer extends BaseRabbitMQ
      */
     public function restartDaemon()
     {
+        $this->logger->printInfo("dsa");
         $this->stopConsuming();
         $this->renew();
         $this->resetConsumed();
         $this->logger->printInfo("\nConsumer has been restarted.\n", Console::FG_YELLOW);
+
         $this->consume($this->target);
     }
 

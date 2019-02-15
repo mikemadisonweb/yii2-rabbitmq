@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1); declare(ticks=1);
 
 namespace mikemadisonweb\rabbitmq\controllers;
 
@@ -290,6 +290,7 @@ class RabbitMQController extends Controller
             if (!function_exists('pcntl_signal')) {
                 throw new \BadFunctionCallException("Function 'pcntl_signal' is referenced in the php.ini 'disable_functions' and can't be called.");
             }
+
             pcntl_signal(SIGTERM, [$consumer, 'stopDaemon']);
             pcntl_signal(SIGINT, [$consumer, 'stopDaemon']);
             pcntl_signal(SIGHUP, [$consumer, 'restartDaemon']);

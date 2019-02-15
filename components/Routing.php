@@ -1,8 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace mikemadisonweb\rabbitmq\components;
 
 use mikemadisonweb\rabbitmq\exceptions\RuntimeException;
+use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Exception\AMQPProtocolChannelException;
 use yii\helpers\ArrayHelper;
@@ -16,10 +17,16 @@ class Routing
     private $exchangesDeclared = [];
     private $queuesDeclared = [];
     private $isDeclared = false;
+
     /**
      * @var $conn AbstractConnection
      */
     private $conn;
+
+    /**
+     * @var $conn AMQPChannel
+     */
+    private $ch;
 
     /**
      * @param AbstractConnection $conn
@@ -85,10 +92,12 @@ class Routing
         if(!isset($this->queues[$queueName])) {
             throw new RuntimeException("Queue `{$queueName}` is not configured.");
         }
+
+        $channel = 
         $queue = $this->queues[$queueName];
         if (!isset($this->queuesDeclared[$queueName])) {
             if (ArrayHelper::isAssociative($queue)) {
-                $this->conn->channel()->queue_declare(
+                $this->getChannel()->queue_declare(
                     $queue['name'],
                     $queue['passive'],
                     $queue['durable'],
@@ -100,7 +109,7 @@ class Routing
                 );
             } else {
                 foreach ($queue as $q) {
-                    $this->conn->channel()->queue_declare(
+                    $this->getChannel()->queue_declare(
                         $q['name'],
                         $q['passive'],
                         $q['durable'],
@@ -140,13 +149,13 @@ class Routing
             foreach ($binding['routing_keys'] as $routingKey) {
                 // queue binding is not permitted on the default exchange
                 if ('' !== $binding['exchange']) {
-                    $this->conn->channel()->queue_bind($binding['queue'], $binding['exchange'], $routingKey);
+                    $this->getChannel()->queue_bind($binding['queue'], $binding['exchange'], $routingKey);
                 }
             }
         } else {
             // queue binding is not permitted on the default exchange
             if ('' !== $binding['exchange']) {
-                $this->conn->channel()->queue_bind($binding['queue'], $binding['exchange']);
+                $this->getChannel()->queue_bind($binding['queue'], $binding['exchange']);
             }
         }
     }
@@ -161,13 +170,13 @@ class Routing
             foreach ($binding['routing_keys'] as $routingKey) {
                 // queue binding is not permitted on the default exchange
                 if ('' !== $binding['exchange']) {
-                    $this->conn->channel()->exchange_bind($binding['to_exchange'], $binding['exchange'], $routingKey);
+                    $this->getChannel()->exchange_bind($binding['to_exchange'], $binding['exchange'], $routingKey);
                 }
             }
         } else {
             // queue binding is not permitted on the default exchange
             if ('' !== $binding['exchange']) {
-                $this->conn->channel()->exchange_bind($binding['to_exchange'], $binding['exchange']);
+                $this->getChannel()->exchange_bind($binding['to_exchange'], $binding['exchange']);
             }
         }
     }
@@ -183,7 +192,7 @@ class Routing
         }
         $exchange = $this->exchanges[$exchangeName];
         if (!isset($this->exchangesDeclared[$exchangeName])) {
-            $this->conn->channel()->exchange_declare(
+            $this->getChannel()->exchange_declare(
                 $exchange['name'],
                 $exchange['type'],
                 $exchange['passive'],
@@ -208,7 +217,7 @@ class Routing
         if (!isset($this->queues[$queueName])) {
             throw new RuntimeException("Queue {$queueName} is not configured. Purge is aborted.");
         }
-        $this->conn->channel()->queue_purge($queueName, true);
+        $this->getChannel()->queue_purge($queueName, true);
     }
 
     /**
@@ -235,20 +244,20 @@ class Routing
         if (!isset($this->queues[$queueName])) {
             throw new RuntimeException("Queue {$queueName} is not configured. Delete is aborted.");
         }
-        $this->conn->channel()->queue_delete($queueName);
+        $this->getChannel()->queue_delete($queueName);
     }
 
     /**
-     * Delete the exchange
+     * Delete the queue
      * @param string $exchangeName
      * @throws RuntimeException
      */
     public function deleteExchange(string $exchangeName)
     {
-        if (!isset($this->exchanges[$exchangeName])) {
-            throw new RuntimeException("Exchange {$exchangeName} is not configured. Delete is aborted.");
+        if (!isset($this->queues[$exchangeName])) {
+            throw new RuntimeException("Queue {$exchangeName} is not configured. Delete is aborted.");
         }
-        $this->conn->channel()->exchange_delete($exchangeName);
+        $this->getChannel()->exchange_delete($exchangeName);
     }
 
     /**
@@ -259,7 +268,7 @@ class Routing
     public function isExchangeExists(string $exchangeName) : bool
     {
         try {
-            $this->conn->channel()->exchange_declare($exchangeName, null, true);
+            $this->getChannel()->exchange_declare($exchangeName, null, true);
         } catch (AMQPProtocolChannelException $e) {
             return false;
         }
@@ -275,7 +284,7 @@ class Routing
     public function isQueueExists(string $queueName) : bool
     {
         try {
-            $this->conn->channel()->queue_declare($queueName, true);
+            $this->getChannel()->queue_declare($queueName, true);
         } catch (AMQPProtocolChannelException $e) {
             return false;
         }
@@ -299,5 +308,17 @@ class Routing
         }
 
         return $namedArr;
+    }
+
+    /**
+     * @return AMQPChannel
+     */
+    private function getChannel()
+    {
+        if (empty($this->ch) || null === $this->ch->getChannelId()) {
+            $this->ch = $this->conn->channel();
+        }
+
+        return $this->ch;
     }
 }
