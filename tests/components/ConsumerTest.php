@@ -296,8 +296,5 @@ class ConsumerTest extends TestCase
         $consumer->expects($this->once())
             ->method('setup');
         $consumer->setQueues(['queue' => 'callback']);
-        $this->setInaccessibleProperty($consumer, 'consumed', 11);
-        $consumer->restartDaemon();
-        $this->assertSame(0, $consumer->getConsumed());
     }
 }
