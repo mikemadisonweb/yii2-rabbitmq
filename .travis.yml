@@ -3,6 +3,8 @@ language: php
 php:
   - 7.0
   - 7.1
+  - 7.2
+  - 7.3
 
 install:
   - composer clear-cache
@@ -17,5 +19,5 @@ after_success:
 
 cache:
   directories:
-  - vendor
-  - $HOME/.cache/composer
+    - vendor
+    - $HOME/.cache/composer
