@@ -284,15 +284,17 @@ class ConsumerTest extends TestCase
         $connection->method('channel')
             ->willReturn($channel);
         $routing = $this->createMock(Routing::class);
-        $routing->expects($this->never())
-            ->method('declareAll');
         $logger = $this->createMock(Logger::class);
         $consumer = $this->getMockBuilder(Consumer::class)
             ->setConstructorArgs([$connection, $routing, $logger, false])
             ->setMethods(['consume'])
             ->getMock();
         $consumer->expects($this->once())
-            ->method('consume');
+            ->method('stopConsuming');
+        $consumer->expects($this->once())
+            ->method('renew');
+        $consumer->expects($this->once())
+            ->method('setup');
         $consumer->setQueues(['queue' => 'callback']);
         $this->setInaccessibleProperty($consumer, 'consumed', 11);
         $consumer->restartDaemon();
