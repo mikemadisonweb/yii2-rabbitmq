@@ -279,8 +279,6 @@ class ConsumerTest extends TestCase
         $channel = $this->getMockBuilder(AMQPChannel::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $channel->expects($this->once())
-            ->method('basic_cancel');
         $connection->method('channel')
             ->willReturn($channel);
         $routing = $this->createMock(Routing::class);
