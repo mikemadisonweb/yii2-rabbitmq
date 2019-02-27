@@ -287,7 +287,7 @@ class ConsumerTest extends TestCase
         $logger = $this->createMock(Logger::class);
         $consumer = $this->getMockBuilder(Consumer::class)
             ->setConstructorArgs([$connection, $routing, $logger, false])
-            ->setMethods(['consume'])
+            ->setMethods(['stopConsuming', 'renew', 'setup'])
             ->getMock();
         $consumer->expects($this->once())
             ->method('stopConsuming');
