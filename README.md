@@ -20,7 +20,7 @@ php composer.phar require mikemadisonweb/yii2-rabbitmq
 ```
 or add
 ```json
-"mikemadisonweb/yii2-rabbitmq": "^2.0.0"
+"mikemadisonweb/yii2-rabbitmq": "^2.1.1"
 ```
 to the require section of your `composer.json` file.
 
@@ -258,6 +258,7 @@ $rabbitmq_defaults = [
                 'ssl_context' => null,
                 'keepalive' => false,
                 'heartbeat' => 0,
+                'channel_rpc_timeout' => 1
             ],
         ],
         'exchanges' => [

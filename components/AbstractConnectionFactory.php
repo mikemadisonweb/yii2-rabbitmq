@@ -43,7 +43,8 @@ class AbstractConnectionFactory
             $this->_parameters['read_write_timeout'],
             $this->_parameters['ssl_context'],
             $this->_parameters['keepalive'],
-            $this->_parameters['heartbeat']
+            $this->_parameters['heartbeat'],
+            $this->_parameters['channel_rpc_timeout']
         );
     }
 
