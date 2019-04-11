@@ -42,6 +42,7 @@ class Configuration extends Component
                 'ssl_context' => null,
                 'keepalive' => false,
                 'heartbeat' => 0,
+                'channel_rpc_timeout' => 0.0
             ],
         ],
         'exchanges' => [
