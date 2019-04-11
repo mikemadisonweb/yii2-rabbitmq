@@ -258,7 +258,7 @@ $rabbitmq_defaults = [
                 'ssl_context' => null,
                 'keepalive' => false,
                 'heartbeat' => 0,
-                'channel_rpc_timeout' => 1
+                'channel_rpc_timeout' => 0.0
             ],
         ],
         'exchanges' => [
