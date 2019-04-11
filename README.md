@@ -20,7 +20,7 @@ php composer.phar require mikemadisonweb/yii2-rabbitmq
 ```
 or add
 ```json
-"mikemadisonweb/yii2-rabbitmq": "^2.1.1"
+"mikemadisonweb/yii2-rabbitmq": "^2.2.0"
 ```
 to the require section of your `composer.json` file.
 
@@ -164,6 +164,9 @@ return [
 ];
 ```
 Logger disabled by default. When enabled it will log messages into main application log or to your own log target if you specify corresponding category name. Option 'print_console' gives you additional information while debugging a consumer in you console.
+
+#### Example
+Simple setup of Yii2 basic template with the RabbitMQ extension is available [here](https://bitbucket.org/MikeMadison/yii2-rabbitmq-test). Feel free to experiment with it and debug your existing configuration in an isolated manner.
 
 Console commands
 -------------

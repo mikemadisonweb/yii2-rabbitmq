@@ -99,7 +99,7 @@ class RabbitMQController extends Controller
         }
         catch (ReflectionException $e)
         {
-            $this->stderr(Console::ansiFormat("Consumer `{$name}` doesn't exist.\n", [Console::FG_RED]));
+            $this->stderr(Console::ansiFormat("Consumer `{$name}` doesn't exist: {$e->getMessage()}\n", [Console::FG_RED]));
 
             return self::EXIT_CODE_ERROR;
         }
@@ -134,7 +134,7 @@ class RabbitMQController extends Controller
         }
         catch (ReflectionException $e)
         {
-            $this->stderr(Console::ansiFormat("Producer `{$producerName}` doesn't exist.\n", [Console::FG_RED]));
+            $this->stderr(Console::ansiFormat("Producer `{$producerName}` doesn't exist: {$e->getMessage()}\n", [Console::FG_RED]));
 
             return self::EXIT_CODE_ERROR;
         }
