@@ -128,12 +128,12 @@ return [
         'rabbitmq'  => [
             // ...
             'on before_consume' => function ($event) {
-                if (isset(\Yii::$app->db)) {
-                    $db = \Yii::$app->db;
-                    if ($db->getIsActive()) {
-                        $db->close();
+                if (isset(\Yii::$app->db) && \Yii::$app->db->isActive) {
+                    try {
+                        Yii::$app->db->createCommand('SELECT 1')->query();
+                    } catch (\yii\db\Exception $exception) {
+                        Yii::$app->db->close();
                     }
-                    $db->open();
                 }
             },
         ],
