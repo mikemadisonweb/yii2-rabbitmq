@@ -130,9 +130,9 @@ return [
             'on before_consume' => function ($event) {
                 if (isset(\Yii::$app->db) && \Yii::$app->db->isActive) {
                     try {
-                        Yii::$app->db->createCommand('SELECT 1')->query();
+                        \Yii::$app->db->createCommand('SELECT 1')->query();
                     } catch (\yii\db\Exception $exception) {
-                        Yii::$app->db->close();
+                        \Yii::$app->db->close();
                     }
                 }
             },
