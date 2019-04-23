@@ -117,7 +117,7 @@ If you need several consumers you can list respective entries in the configurati
 
 Be sure that all queues and exchanges are defined in corresponding bindings, it's up to you to set up correct message routing.
 #### Lifecycle events
-There are also some lifecycle events implemented: before_consume, after_consume, before_publish, after_publish. You can use them for any additional work you need to do before or after message been consumed/published. For example, reopen database connection for it not to be closed by a timeout as a consumer is a long-running process: 
+There are also some lifecycle events implemented: before_consume, after_consume, before_publish, after_publish. You can use them for any additional work you need to do before or after message been consumed/published. For example, make sure that Yii knows the database connection has been closed by a timeout as a consumer is a long-running process: 
 ```php
 <?php
 // config/main.php
@@ -128,12 +128,12 @@ return [
         'rabbitmq'  => [
             // ...
             'on before_consume' => function ($event) {
-                if (isset(\Yii::$app->db)) {
-                    $db = \Yii::$app->db;
-                    if ($db->getIsActive()) {
-                        $db->close();
+                if (\Yii::$app->has('db') && \Yii::$app->db->isActive) {
+                    try {
+                        \Yii::$app->db->createCommand('SELECT 1')->query();
+                    } catch (\yii\db\Exception $exception) {
+                        \Yii::$app->db->close();
                     }
-                    $db->open();
                 }
             },
         ],
