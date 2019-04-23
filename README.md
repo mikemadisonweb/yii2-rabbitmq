@@ -317,7 +317,7 @@ $rabbitmq_defaults = [
                     'prefetch_count' => 0,
                     'global' => false,
                 ],
-                'idle_timeout' => null,
+                'idle_timeout' => 0,
                 'idle_timeout_exit_code' => null,
                 'proceed_on_exception' => false,
                 'deserializer' => 'unserialize',
