@@ -33,55 +33,57 @@ return [
     // should be in common.php
     'components'    => [
         // ...
-        'class' => \mikemadisonweb\rabbitmq\Configuration::class,
-        'connections' => [
-            [
-                // You can pass these parameters as a single `url` option: https://www.rabbitmq.com/uri-spec.html
-                'host' => 'YOUR_HOSTNAME',
-                'port' => '5672',
-                'user' => 'YOUR_USERNAME',
-                'password' => 'YOUR_PASSWORD',
-                'vhost' => '/',
-            ]
-            // When multiple connections is used you need to specify a `name` option for each one and define them in producer and consumer configuration blocks 
-        ],
-        'exchanges' => [
-            [
-                'name' => 'YOUR_EXCHANGE_NAME',
-                'type' => 'direct'
-                // Refer to Defaults section for all possible options
+        'rabbitmq' => [
+            'class' => \mikemadisonweb\rabbitmq\Configuration::class,
+            'connections' => [
+                [
+                    // You can pass these parameters as a single `url` option: https://www.rabbitmq.com/uri-spec.html
+                    'host' => 'YOUR_HOSTNAME',
+                    'port' => '5672',
+                    'user' => 'YOUR_USERNAME',
+                    'password' => 'YOUR_PASSWORD',
+                    'vhost' => '/',
+                ]
+                // When multiple connections is used you need to specify a `name` option for each one and define them in producer and consumer configuration blocks 
             ],
-        ],
-        'queues' => [
-            [
-                'name' => 'YOUR_QUEUE_NAME',
-                // Queue can be configured here the way you want it:
-                //'durable' => true,
-                //'auto_delete' => false,
+            'exchanges' => [
+                [
+                    'name' => 'YOUR_EXCHANGE_NAME',
+                    'type' => 'direct'
+                    // Refer to Defaults section for all possible options
+                ],
             ],
-            [
-                'name' => 'YOUR_ANOTHER_QUEUE_NAME',
+            'queues' => [
+                [
+                    'name' => 'YOUR_QUEUE_NAME',
+                    // Queue can be configured here the way you want it:
+                    //'durable' => true,
+                    //'auto_delete' => false,
+                ],
+                [
+                    'name' => 'YOUR_ANOTHER_QUEUE_NAME',
+                ],
             ],
-        ],
-        'bindings' => [
-            [
-                'queue' => 'YOUR_QUEUE_NAME',
-                'exchange' => 'YOUR_EXCHANGE_NAME',
-                'routing_keys' => ['YOUR_ROUTING_KEY'],
+            'bindings' => [
+                [
+                    'queue' => 'YOUR_QUEUE_NAME',
+                    'exchange' => 'YOUR_EXCHANGE_NAME',
+                    'routing_keys' => ['YOUR_ROUTING_KEY'],
+                ],
             ],
-        ],
-        'producers' => [
-            [
-                'name' => 'YOUR_PRODUCER_NAME',
+            'producers' => [
+                [
+                    'name' => 'YOUR_PRODUCER_NAME',
+                ],
             ],
-        ],
-        'consumers' => [
-            [
-                'name' => 'YOUR_CONSUMER_NAME',
-                // Every consumer should define one or more callbacks for corresponding queues
-                'callbacks' => [
-                    // queue name => callback class name
-                    'YOUR_QUEUE_NAME' => \path\to\YourConsumer::class,
+            'consumers' => [
+                [
+                    'name' => 'YOUR_CONSUMER_NAME',
+                    // Every consumer should define one or more callbacks for corresponding queues
+                    'callbacks' => [
+                        // queue name => callback class name
+                        'YOUR_QUEUE_NAME' => \path\to\YourConsumer::class,
+                    ],
                 ],
             ],
         ],
