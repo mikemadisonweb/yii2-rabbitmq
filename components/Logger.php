@@ -114,10 +114,10 @@ class Logger
     public function printInfo($message, $color = Console::FG_YELLOW)
     {
         if (Console::streamSupportsAnsiColors(\STDOUT)) {
-            $message = Console::ansiFormat($message, [$color]) . "\n";
+            $message = Console::ansiFormat($message, [$color]);
         }
 
-        return Console::stdout($message);
+        return Console::output($message);
     }
 
     /**
