@@ -176,6 +176,8 @@ class DependencyInjection implements BootstrapInterface
      */
     private function addControllers(Application $app)
     {
-        $app->controllerMap[Configuration::EXTENSION_CONTROLLER_ALIAS] = RabbitMQController::class;
+	    if($app instanceof \yii\console\Application) {
+		    $app->controllerMap[Configuration::EXTENSION_CONTROLLER_ALIAS] = RabbitMQController::class;
+	    }
     }
 }
