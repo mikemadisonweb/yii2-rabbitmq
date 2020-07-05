@@ -93,7 +93,6 @@ class Routing
             throw new RuntimeException("Queue `{$queueName}` is not configured.");
         }
 
-        $channel =
         $queue = $this->queues[$queueName];
         if (!isset($this->queuesDeclared[$queueName])) {
             if (ArrayHelper::isAssociative($queue)) {

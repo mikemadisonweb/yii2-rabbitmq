@@ -5,11 +5,10 @@ php:
   - 7.1
   - 7.2
   - 7.3
+  - 7.4
 
 install:
   - composer clear-cache
-  - composer config github-oauth.github.com ${GITHUB_TOKEN};
-  - composer global require fxp/composer-asset-plugin
   - composer install --no-interaction --prefer-dist
 
 script: vendor/bin/phpunit
@@ -19,5 +18,4 @@ after_success:
 
 cache:
   directories:
-    - vendor
-    - $HOME/.cache/composer
+    - $HOME/.composer/cache
