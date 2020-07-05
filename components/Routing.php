@@ -93,7 +93,7 @@ class Routing
             throw new RuntimeException("Queue `{$queueName}` is not configured.");
         }
 
-        $channel = 
+        $channel =
         $queue = $this->queues[$queueName];
         if (!isset($this->queuesDeclared[$queueName])) {
             if (ArrayHelper::isAssociative($queue)) {
@@ -254,8 +254,8 @@ class Routing
      */
     public function deleteExchange(string $exchangeName)
     {
-        if (!isset($this->queues[$exchangeName])) {
-            throw new RuntimeException("Queue {$exchangeName} is not configured. Delete is aborted.");
+        if (!isset($this->exchanges[$exchangeName])) {
+            throw new RuntimeException("Exchange {$exchangeName} is not configured. Delete is aborted.");
         }
         $this->getChannel()->exchange_delete($exchangeName);
     }
