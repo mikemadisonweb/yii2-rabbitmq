@@ -250,7 +250,7 @@ class RabbitMQController extends Controller
         if ($this->interactive)
         {
             $input = Console::prompt('Are you sure you want to delete all queues and exchanges?', ['default' => 'yes']);
-            if ($input !== 'yes')
+            if ($input !== 'yes' && $input !== 'y')
             {
                 $this->stderr(Console::ansiFormat("Aborted.\n", [Console::FG_RED]));
 

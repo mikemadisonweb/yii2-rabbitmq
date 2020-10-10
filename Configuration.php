@@ -8,7 +8,10 @@ use mikemadisonweb\rabbitmq\components\Routing;
 use mikemadisonweb\rabbitmq\exceptions\InvalidConfigException;
 use PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Connection\AMQPLazyConnection;
+use PhpAmqpLib\Connection\AMQPSSLConnection;
+use Yii;
 use yii\base\Component;
+use yii\di\NotInstantiableException;
 use yii\helpers\ArrayHelper;
 
 class Configuration extends Component
@@ -145,7 +148,9 @@ class Configuration extends Component
     /**
      * Get connection service
      * @param string $connectionName
-     * @return AbstractConnection
+     * @return object|AbstractConnection
+     * @throws NotInstantiableException
+     * @throws \yii\base\InvalidConfigException
      */
     public function getConnection(string $connectionName = '') : AbstractConnection
     {
@@ -153,36 +158,43 @@ class Configuration extends Component
             $connectionName = self::DEFAULT_CONNECTION_NAME;
         }
 
-        return \Yii::$container->get(sprintf(self::CONNECTION_SERVICE_NAME, $connectionName));
+        return Yii::$container->get(sprintf(self::CONNECTION_SERVICE_NAME, $connectionName));
     }
 
     /**
      * Get producer service
      * @param string $producerName
-     * @return Producer
+     * @return Producer|object
+     * @throws \yii\base\InvalidConfigException
+     * @throws NotInstantiableException
      */
-    public function getProducer(string $producerName) : Producer
+    public function getProducer(string $producerName)
     {
-        return \Yii::$container->get(sprintf(self::PRODUCER_SERVICE_NAME, $producerName));
+        return Yii::$container->get(sprintf(self::PRODUCER_SERVICE_NAME, $producerName));
     }
 
     /**
      * Get consumer service
      * @param string $consumerName
-     * @return Consumer
+     * @return Consumer|object
+     * @throws NotInstantiableException
+     * @throws \yii\base\InvalidConfigException
      */
-    public function getConsumer(string $consumerName) : Consumer
+    public function getConsumer(string $consumerName)
     {
-        return \Yii::$container->get(sprintf(self::CONSUMER_SERVICE_NAME, $consumerName));
+        return Yii::$container->get(sprintf(self::CONSUMER_SERVICE_NAME, $consumerName));
     }
 
     /**
      * Get routing service
-     * @return Routing
+     * @param AbstractConnection $connection
+     * @return Routing|object|string
+     * @throws NotInstantiableException
+     * @throws \yii\base\InvalidConfigException
      */
-    public function getRouting(AbstractConnection $connection) : Routing
+    public function getRouting(AbstractConnection $connection)
     {
-        return \Yii::$container->get(Configuration::ROUTING_SERVICE_NAME, ['conn' => $connection]);
+        return Yii::$container->get(Configuration::ROUTING_SERVICE_NAME, ['conn' => $connection]);
     }
 
     /**
@@ -260,6 +272,12 @@ class Configuration extends Component
             }
             if (isset($connection['type']) && !is_subclass_of($connection['type'], AbstractConnection::class)) {
                 throw new InvalidConfigException('Connection type should be a subclass of PhpAmqpLib\Connection\AbstractConnection.');
+            }
+            if (!empty($connection['ssl_context']) && empty($connection['type'])) {
+                throw new InvalidConfigException('If you are using a ssl connection, the connection type must be AMQPSSLConnection::class');
+            }
+            if (!empty($connection['ssl_context']) && $connection['type'] !== AMQPSSLConnection::class) {
+                throw new InvalidConfigException('If you are using a ssl connection, the connection type must be AMQPSSLConnection::class');
             }
         }
 
