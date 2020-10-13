@@ -29,6 +29,23 @@ class AbstractConnectionFactory
      */
     public function createConnection() : AbstractConnection
     {
+        if ($this->_parameters['ssl_context'] !== null) {
+            return new $this->_class(
+                $this->_parameters['host'],
+                $this->_parameters['port'],
+                $this->_parameters['user'],
+                $this->_parameters['password'],
+                $this->_parameters['vhost'],
+                $this->_parameters['ssl_context'],
+                [
+                    'connection_timeout' => $this->_parameters['connection_timeout'],
+                    'read_write_timeout' => $this->_parameters['read_write_timeout'],
+                    'keepalive' => $this->_parameters['keepalive'],
+                    'heartbeat' => $this->_parameters['heartbeat'],
+                    'channel_rpc_timeout' => $this->_parameters['channel_rpc_timeout'],
+                ]
+            );
+        }
         return new $this->_class(
             $this->_parameters['host'],
             $this->_parameters['port'],

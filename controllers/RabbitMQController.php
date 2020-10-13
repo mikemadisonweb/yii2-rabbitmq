@@ -10,6 +10,7 @@ use mikemadisonweb\rabbitmq\Configuration;
 use ReflectionException;
 use yii\base\Action;
 use yii\console\Controller;
+use yii\console\ExitCode;
 use yii\helpers\Console;
 
 /**
@@ -101,7 +102,7 @@ class RabbitMQController extends Controller
         {
             $this->stderr(Console::ansiFormat("Consumer `{$name}` doesn't exist: {$e->getMessage()}\n", [Console::FG_RED]));
 
-            return self::EXIT_CODE_ERROR;
+            return ExitCode::UNSPECIFIED_ERROR;
         }
 
         $this->validateConsumerOptions($consumer);
@@ -111,7 +112,7 @@ class RabbitMQController extends Controller
         }
         $consumer->consume($this->messagesLimit);
 
-        return self::EXIT_CODE_NORMAL;
+        return ExitCode::OK;
     }
 
     /**
@@ -136,7 +137,7 @@ class RabbitMQController extends Controller
         {
             $this->stderr(Console::ansiFormat("Producer `{$producerName}` doesn't exist: {$e->getMessage()}\n", [Console::FG_RED]));
 
-            return self::EXIT_CODE_ERROR;
+            return ExitCode::UNSPECIFIED_ERROR;
         }
 
         $data = '';
@@ -144,7 +145,7 @@ class RabbitMQController extends Controller
         {
             $this->stderr(Console::ansiFormat("Please pipe in some data in order to send it.\n", [Console::FG_RED]));
 
-            return self::EXIT_CODE_ERROR;
+            return ExitCode::UNSPECIFIED_ERROR;
         }
         while (!feof(STDIN))
         {
@@ -153,7 +154,7 @@ class RabbitMQController extends Controller
         $producer->publish($data, $exchangeName, $routingKey);
         $this->stdout("Message was successfully published.\n", Console::FG_GREEN);
 
-        return self::EXIT_CODE_NORMAL;
+        return ExitCode::OK;
     }
 
     /**
@@ -175,11 +176,11 @@ class RabbitMQController extends Controller
                 Console::ansiFormat("All configured entries was successfully declared.\n", [Console::FG_GREEN])
             );
 
-            return self::EXIT_CODE_NORMAL;
+            return ExitCode::OK;
         }
         $this->stderr(Console::ansiFormat("No queues, exchanges or bindings configured.\n", [Console::FG_RED]));
 
-        return self::EXIT_CODE_ERROR;
+        return ExitCode::UNSPECIFIED_ERROR;
     }
 
     /**
@@ -201,12 +202,12 @@ class RabbitMQController extends Controller
         {
             $this->stderr(Console::ansiFormat("Exchange `{$exchangeName}` is already exists.\n", [Console::FG_RED]));
 
-            return self::EXIT_CODE_ERROR;
+            return ExitCode::UNSPECIFIED_ERROR;
         }
         $routing->declareExchange($exchangeName);
         $this->stdout(Console::ansiFormat("Exchange `{$exchangeName}` was declared.\n", [Console::FG_GREEN]));
 
-        return self::EXIT_CODE_NORMAL;
+        return ExitCode::OK;
     }
 
     /**
@@ -228,12 +229,12 @@ class RabbitMQController extends Controller
         {
             $this->stderr(Console::ansiFormat("Queue `{$queueName}` is already exists.\n", [Console::FG_RED]));
 
-            return self::EXIT_CODE_ERROR;
+            return ExitCode::UNSPECIFIED_ERROR;
         }
         $routing->declareQueue($queueName);
         $this->stdout(Console::ansiFormat("Queue `{$queueName}` was declared.\n", [Console::FG_GREEN]));
 
-        return self::EXIT_CODE_NORMAL;
+        return ExitCode::OK;
     }
 
     /**
@@ -249,11 +250,11 @@ class RabbitMQController extends Controller
         if ($this->interactive)
         {
             $input = Console::prompt('Are you sure you want to delete all queues and exchanges?', ['default' => 'yes']);
-            if ($input !== 'yes')
+            if ($input !== 'yes' && $input !== 'y')
             {
                 $this->stderr(Console::ansiFormat("Aborted.\n", [Console::FG_RED]));
 
-                return self::EXIT_CODE_ERROR;
+                return ExitCode::UNSPECIFIED_ERROR;
             }
         }
         $conn    = \Yii::$app->rabbitmq->getConnection($connection);
@@ -261,7 +262,7 @@ class RabbitMQController extends Controller
         $routing->deleteAll();
         $this->stdout(Console::ansiFormat("All configured entries was deleted.\n", [Console::FG_GREEN]));
 
-        return self::EXIT_CODE_NORMAL;
+        return ExitCode::OK;
     }
 
     /**
@@ -284,7 +285,7 @@ class RabbitMQController extends Controller
             {
                 $this->stderr(Console::ansiFormat("Aborted.\n", [Console::FG_RED]));
 
-                return self::EXIT_CODE_ERROR;
+                return ExitCode::UNSPECIFIED_ERROR;
             }
         }
         $conn    = \Yii::$app->rabbitmq->getConnection($connectionName);
@@ -292,7 +293,7 @@ class RabbitMQController extends Controller
         $routing->deleteExchange($exchangeName);
         $this->stdout(Console::ansiFormat("Exchange `{$exchangeName}` was deleted.\n", [Console::FG_GREEN]));
 
-        return self::EXIT_CODE_NORMAL;
+        return ExitCode::OK;
     }
 
     /**
@@ -315,7 +316,7 @@ class RabbitMQController extends Controller
             {
                 $this->stderr(Console::ansiFormat("Aborted.\n", [Console::FG_RED]));
 
-                return self::EXIT_CODE_ERROR;
+                return ExitCode::UNSPECIFIED_ERROR;
             }
         }
 
@@ -324,7 +325,7 @@ class RabbitMQController extends Controller
         $routing->deleteQueue($queueName);
         $this->stdout(Console::ansiFormat("Queue `{$queueName}` was deleted.\n", [Console::FG_GREEN]));
 
-        return self::EXIT_CODE_NORMAL;
+        return ExitCode::OK;
     }
 
     /**
@@ -350,7 +351,7 @@ class RabbitMQController extends Controller
             {
                 $this->stderr(Console::ansiFormat("Aborted.\n", [Console::FG_RED]));
 
-                return self::EXIT_CODE_ERROR;
+                return ExitCode::UNSPECIFIED_ERROR;
             }
         }
 
@@ -359,7 +360,7 @@ class RabbitMQController extends Controller
         $routing->purgeQueue($queueName);
         $this->stdout(Console::ansiFormat("Queue `{$queueName}` was purged.\n", [Console::FG_GREEN]));
 
-        return self::EXIT_CODE_NORMAL;
+        return ExitCode::OK;
     }
 
     /**
