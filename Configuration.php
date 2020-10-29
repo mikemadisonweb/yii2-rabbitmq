@@ -107,6 +107,10 @@ class Configuration extends Component
                 'idle_timeout_exit_code' => null,
                 'proceed_on_exception' => false,
                 'deserializer' => 'unserialize',
+                'systemd' => [
+                    'memory_limit' => 0,
+                    'workers' => 1
+                ],
             ],
         ],
         'logger' => [

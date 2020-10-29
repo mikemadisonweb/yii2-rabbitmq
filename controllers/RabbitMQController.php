@@ -3,11 +3,12 @@ declare(ticks=1);
 
 namespace mikemadisonweb\rabbitmq\controllers;
 
+use BadFunctionCallException;
+use InvalidArgumentException;
 use mikemadisonweb\rabbitmq\components\Consumer;
-use mikemadisonweb\rabbitmq\components\Producer;
 use mikemadisonweb\rabbitmq\components\Routing;
 use mikemadisonweb\rabbitmq\Configuration;
-use ReflectionException;
+use Yii;
 use yii\base\Action;
 use yii\console\Controller;
 use yii\console\ExitCode;
@@ -29,9 +30,14 @@ class RabbitMQController extends Controller
     public $withoutSignals = false;
 
     /**
-     * @var $routing Routing
+     * @var Configuration
      */
-    protected $routing;
+    private $rabbitmq;
+
+    public function init()
+    {
+        $this->rabbitmq = Yii::$app->rabbitmq;
+    }
 
     protected $options = [
         'm' => 'messagesLimit',
@@ -91,20 +97,7 @@ class RabbitMQController extends Controller
      */
     public function actionConsume(string $name): int
     {
-        try
-        {
-            /**
-             * @var $consumer Consumer
-             */
-            $consumer = \Yii::$app->rabbitmq->getConsumer($name);
-        }
-        catch (ReflectionException $e)
-        {
-            $this->stderr(Console::ansiFormat("Consumer `{$name}` doesn't exist: {$e->getMessage()}\n", [Console::FG_RED]));
-
-            return ExitCode::UNSPECIFIED_ERROR;
-        }
-
+        $consumer = $this->rabbitmq->getConsumer($name);
         $this->validateConsumerOptions($consumer);
         if ((null !== $this->memoryLimit) && ctype_digit((string)$this->memoryLimit) && ($this->memoryLimit > 0))
         {
@@ -116,30 +109,35 @@ class RabbitMQController extends Controller
     }
 
     /**
+     * Restart consumer by name
+     *
+     * @param string $name
+     * @return int
+     * @throws \Throwable
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    public function actionRestartConsume(string $name): int
+    {
+        $consumer = $this->rabbitmq->getConsumer($name);
+        $consumer->restartDaemon();
+        return $this->actionConsume($name);
+    }
+
+    /**
      * Publish a message from STDIN to the queue
      *
-     * @param        $producerName
-     * @param        $exchangeName
+     * @param string $producerName
+     * @param string $exchangeName
      * @param string $routingKey
      *
      * @return int
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
      */
     public function actionPublish(string $producerName, string $exchangeName, string $routingKey = ''): int
     {
-        try
-        {
-            /**
-             * @var $producer Producer
-             */
-            $producer = \Yii::$app->rabbitmq->getProducer($producerName);
-        }
-        catch (ReflectionException $e)
-        {
-            $this->stderr(Console::ansiFormat("Producer `{$producerName}` doesn't exist: {$e->getMessage()}\n", [Console::FG_RED]));
-
-            return ExitCode::UNSPECIFIED_ERROR;
-        }
-
+        $producer = $this->rabbitmq->getProducer($producerName);
         $data = '';
         if (posix_isatty(STDIN))
         {
@@ -167,8 +165,7 @@ class RabbitMQController extends Controller
      */
     public function actionDeclareAll(string $connectionName = Configuration::DEFAULT_CONNECTION_NAME): int
     {
-        $conn    = \Yii::$app->rabbitmq->getConnection($connectionName);
-        $routing = \Yii::$app->rabbitmq->getRouting($conn);
+        $routing = $this->getRouting($connectionName);
         $result  = $routing->declareAll();
         if ($result)
         {
@@ -196,8 +193,7 @@ class RabbitMQController extends Controller
         string $exchangeName,
         string $connectionName = Configuration::DEFAULT_CONNECTION_NAME
     ): int {
-        $conn    = \Yii::$app->rabbitmq->getConnection($connectionName);
-        $routing = \Yii::$app->rabbitmq->getRouting($conn);
+        $routing = $this->getRouting($connectionName);
         if ($routing->isExchangeExists($exchangeName))
         {
             $this->stderr(Console::ansiFormat("Exchange `{$exchangeName}` is already exists.\n", [Console::FG_RED]));
@@ -223,8 +219,7 @@ class RabbitMQController extends Controller
         string $queueName,
         string $connectionName = Configuration::DEFAULT_CONNECTION_NAME
     ): int {
-        $conn    = \Yii::$app->rabbitmq->getConnection($connectionName);
-        $routing = \Yii::$app->rabbitmq->getRouting($conn);
+        $routing = $this->getRouting($connectionName);
         if ($routing->isQueueExists($queueName))
         {
             $this->stderr(Console::ansiFormat("Queue `{$queueName}` is already exists.\n", [Console::FG_RED]));
@@ -257,8 +252,7 @@ class RabbitMQController extends Controller
                 return ExitCode::UNSPECIFIED_ERROR;
             }
         }
-        $conn    = \Yii::$app->rabbitmq->getConnection($connection);
-        $routing = \Yii::$app->rabbitmq->getRouting($conn);
+        $routing = $this->getRouting($connection);
         $routing->deleteAll();
         $this->stdout(Console::ansiFormat("All configured entries was deleted.\n", [Console::FG_GREEN]));
 
@@ -288,8 +282,7 @@ class RabbitMQController extends Controller
                 return ExitCode::UNSPECIFIED_ERROR;
             }
         }
-        $conn    = \Yii::$app->rabbitmq->getConnection($connectionName);
-        $routing = \Yii::$app->rabbitmq->getRouting($conn);
+        $routing = $this->getRouting($connectionName);
         $routing->deleteExchange($exchangeName);
         $this->stdout(Console::ansiFormat("Exchange `{$exchangeName}` was deleted.\n", [Console::FG_GREEN]));
 
@@ -320,8 +313,7 @@ class RabbitMQController extends Controller
             }
         }
 
-        $conn    = \Yii::$app->rabbitmq->getConnection($connectionName);
-        $routing = \Yii::$app->rabbitmq->getRouting($conn);
+        $routing = $this->getRouting($connectionName);
         $routing->deleteQueue($queueName);
         $this->stdout(Console::ansiFormat("Queue `{$queueName}` was deleted.\n", [Console::FG_GREEN]));
 
@@ -355,12 +347,24 @@ class RabbitMQController extends Controller
             }
         }
 
-        $conn    = \Yii::$app->rabbitmq->getConnection($connectionName);
-        $routing = \Yii::$app->rabbitmq->getRouting($conn);
+        $routing = $this->getRouting($connectionName);
         $routing->purgeQueue($queueName);
         $this->stdout(Console::ansiFormat("Queue `{$queueName}` was purged.\n", [Console::FG_GREEN]));
 
         return ExitCode::OK;
+    }
+
+
+    /**
+     * @param string $connectionName
+     * @return Routing|object|string
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\di\NotInstantiableException
+     */
+    private function getRouting(string $connectionName)
+    {
+        $conn = $this->rabbitmq->getConnection($connectionName);
+        return $this->rabbitmq->getRouting($conn);
     }
 
     /**
@@ -374,7 +378,7 @@ class RabbitMQController extends Controller
         {
             if (!function_exists('pcntl_signal'))
             {
-                throw new \BadFunctionCallException(
+                throw new BadFunctionCallException(
                     "Function 'pcntl_signal' is referenced in the php.ini 'disable_functions' and can't be called."
                 );
             }
@@ -388,11 +392,11 @@ class RabbitMQController extends Controller
         $this->memoryLimit   = (int)$this->memoryLimit;
         if (!is_numeric($this->messagesLimit) || 0 > $this->messagesLimit)
         {
-            throw new \InvalidArgumentException('The -m option should be null or greater than 0');
+            throw new InvalidArgumentException('The -m option should be null or greater than 0');
         }
         if (!is_numeric($this->memoryLimit) || 0 > $this->memoryLimit)
         {
-            throw new \InvalidArgumentException('The -l option should be null or greater than 0');
+            throw new InvalidArgumentException('The -l option should be null or greater than 0');
         }
     }
 }
