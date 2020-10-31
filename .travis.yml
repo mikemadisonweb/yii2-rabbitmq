@@ -9,7 +9,7 @@ php:
 
 install:
   - composer clear-cache
-  - composer global require fxp/composer-asset-plugin
+  - composer global require fxp/composer-asset-plugin --ignore-platform-reqs
   - composer install --no-interaction --prefer-dist
 
 script: vendor/bin/phpunit
