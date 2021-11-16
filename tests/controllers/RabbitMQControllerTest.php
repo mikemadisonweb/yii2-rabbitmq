@@ -15,7 +15,7 @@ class RabbitMQControllerTest extends TestCase
 {
     protected $controller;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->loadExtension(
             [
