@@ -255,7 +255,7 @@ All configuration options:
 ```php
 $rabbitmq_defaults = [
         'auto_declare' => true,
-        'consumer_standoff' => 3,
+        'consumer_standoff' => 0,
         'connections' => [
             [
                 'name' => self::DEFAULT_CONNECTION_NAME,
