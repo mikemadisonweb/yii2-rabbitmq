@@ -116,6 +116,7 @@ class DependencyInjection implements BootstrapInterface
     protected function registerConsumers(Configuration $config)
     {
         $autoDeclare = $config->auto_declare;
+        $consumerStandoff = $config->consumer_standoff;
         foreach ($config->consumers as $options) {
             $serviceAlias = sprintf(Configuration::CONSUMER_SERVICE_NAME, $options['name']);
             \Yii::$container->setSingleton($serviceAlias, function () use ($options, $autoDeclare) {
@@ -144,6 +145,7 @@ class DependencyInjection implements BootstrapInterface
                 \Yii::$container->invoke([$consumer, 'setIdleTimeoutExitCode'], [$options['idle_timeout_exit_code']]);
                 \Yii::$container->invoke([$consumer, 'setProceedOnException'], [$options['proceed_on_exception']]);
                 \Yii::$container->invoke([$consumer, 'setDeserializer'], [$options['deserializer']]);
+                \Yii::$container->invoke([$consumer, 'setStandoff'], [$options['deserializer']]);
 
                 return $consumer;
             });

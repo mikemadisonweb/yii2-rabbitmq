@@ -34,6 +34,8 @@ class Consumer extends BaseRabbitMQ
 
     protected $name = 'unnamed';
 
+    protected $standoff = 0;
+
     private $id;
 
     private $target;
@@ -157,6 +159,22 @@ class Consumer extends BaseRabbitMQ
     public function getName(): string
     {
         return $this->name;
+    }
+
+    /**
+     * @param int $duration in seconds
+     */
+    public function setStandoff(int $duration)
+    {
+        $this->standoff = $duration;
+    }
+
+    /**
+     * @return int
+     */
+    public function getStandoff(): int
+    {
+        return $this->standoff;
     }
 
     /**
@@ -483,6 +501,7 @@ class Consumer extends BaseRabbitMQ
             $this->routing->declareAll();
         }
         $this->setQosOptions();
+        sleep($this->standoff);
         $this->startConsuming();
     }
 }
