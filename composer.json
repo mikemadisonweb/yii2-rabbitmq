@@ -26,5 +26,11 @@
   },
   "extra": {
     "bootstrap": "mikemadisonweb\\rabbitmq\\DependencyInjection"
-  }
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://asset-packagist.org"
+    }
+  ]
 }

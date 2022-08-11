@@ -30,6 +30,7 @@ class Configuration extends Component
      */
     const DEFAULTS = [
         'auto_declare' => true,
+        'consumer_standoff' => 0,
         'connections' => [
             [
                 'name' => self::DEFAULT_CONNECTION_NAME,
@@ -122,6 +123,7 @@ class Configuration extends Component
     ];
 
     public $auto_declare = null;
+    public $consumer_standoff = null;
     public $connections = [];
     public $producers = [];
     public $consumers = [];
@@ -248,6 +250,10 @@ class Configuration extends Component
     {
         if (($this->auto_declare !== null) && !is_bool($this->auto_declare)) {
             throw new InvalidConfigException("Option `auto_declare` should be of type boolean.");
+        }
+
+        if (($this->consumer_standoff !== null) && !is_int($this->consumer_standoff)) {
+            throw new InvalidConfigException("Option `consumer_standoff` should be of type int.");
         }
 
         if (!is_array($this->logger)) {
@@ -435,6 +441,9 @@ class Configuration extends Component
         $defaults = self::DEFAULTS;
         if (null === $this->auto_declare) {
             $this->auto_declare = $defaults['auto_declare'];
+        }
+        if (null === $this->consumer_standoff) {
+            $this->consumer_standoff = $defaults['consumer_standoff'];
         }
         if (empty($this->logger)) {
             $this->logger = $defaults['logger'];

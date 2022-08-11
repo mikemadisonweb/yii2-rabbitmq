@@ -197,6 +197,13 @@ As PHP daemon especially based upon a framework may be prone to memory leaks, it
 #### Auto-declare
 By default extension configured in auto-declare mode, which means that on every message published exchanges, queues and bindings will be checked and created if missing. If performance means much to your application you should disable that feature in configuration and use console commands to declare and delete routing schema by yourself.
 
+#### Consumer standoff
+PHP processes have a reputation of leaking memory, especially when running as a daemon. It is therefore prudent to limit the runtime of AMQP consumers by frequently reloading them. This is achieved by terminating consumers after handling a maximum number of messages. 
+
+However, when using certain service managers (`supervisord`, for example), this presents a problem. If the number of consumed messages is reached within a certain time period, the service manager will consider the consumer to have exited too soon and assume there is a problem with the service. Removing this threshold in the service manager may lead to infinite restart loops. 
+
+The chosen solution is to implement a standoff period that is applied before the actual consumer loop is started. This will ensure that the controller action can actually be executed because the bootstrapping has succeeded, but the process waits long enough to satisfy the service manager (the threshold may differ per service manager). The default standoff period is 0 seconds due to the nature of this problem.
+
 Usage
 -------------
 As the consumer worker will read messages from the queue, execute a callback method and pass a message to it. 
@@ -248,6 +255,7 @@ All configuration options:
 ```php
 $rabbitmq_defaults = [
         'auto_declare' => true,
+        'consumer_standoff' => 0,
         'connections' => [
             [
                 'name' => self::DEFAULT_CONNECTION_NAME,
