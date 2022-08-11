@@ -202,7 +202,7 @@ PHP processes have a reputation of leaking memory, especially when running as a 
 
 However, when using certain service managers (`supervisord`, for example), this presents a problem. If the number of consumed messages is reached within a certain time period, the service manager will consider the consumer to have exited too soon and assume there is a problem with the service. Removing this threshold in the service manager may lead to infinite restart loops. 
 
-The chosen solution is to implement a standoff period that is applied before the actual consumer loop is started. This will ensure that the controller action can actually be executed because the bootstrapping has succeeded, but the process waits long enough to satisfy the service manager (the threshold may differ per service manager). The default standoff period is 3 seconds, but it can be adjusted in the module settings.
+The chosen solution is to implement a standoff period that is applied before the actual consumer loop is started. This will ensure that the controller action can actually be executed because the bootstrapping has succeeded, but the process waits long enough to satisfy the service manager (the threshold may differ per service manager). The default standoff period is 0 seconds due to the nature of this problem.
 
 Usage
 -------------
