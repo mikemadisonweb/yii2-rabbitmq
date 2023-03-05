@@ -83,7 +83,13 @@ class DependencyInjection implements BootstrapInterface
     {
         $autoDeclare = $config->auto_declare;
         foreach ($config->producers as $options) {
-            $serviceAlias = sprintf(Configuration::PRODUCER_SERVICE_NAME, $options['name']);
+            
+            $name = $options['name'];
+            if(is_a($name, \UnitEnum::class)){
+                $name = $name->name;
+            }
+            
+            $serviceAlias = sprintf(Configuration::PRODUCER_SERVICE_NAME, $name);
             \Yii::$container->setSingleton($serviceAlias, function () use ($options, $autoDeclare) {
                 /**
                  * @var $connection AbstractConnection
@@ -98,7 +104,7 @@ class DependencyInjection implements BootstrapInterface
                  */
                 $logger = \Yii::$container->get(Configuration::LOGGER_SERVICE_NAME);
                 $producer = new Producer($connection, $routing, $logger, $autoDeclare);
-                \Yii::$container->invoke([$producer, 'setName'], [$options['name']]);
+                \Yii::$container->invoke([$producer, 'setName'], [$name]);
                 \Yii::$container->invoke([$producer, 'setContentType'], [$options['content_type']]);
                 \Yii::$container->invoke([$producer, 'setDeliveryMode'], [$options['delivery_mode']]);
                 \Yii::$container->invoke([$producer, 'setSafe'], [$options['safe']]);
@@ -117,7 +123,13 @@ class DependencyInjection implements BootstrapInterface
     {
         $autoDeclare = $config->auto_declare;
         foreach ($config->consumers as $options) {
-            $serviceAlias = sprintf(Configuration::CONSUMER_SERVICE_NAME, $options['name']);
+    
+            $name = $options['name'];
+            if(is_a($name, \UnitEnum::class)){
+                $name = $name->name;
+            }
+            
+            $serviceAlias = sprintf(Configuration::CONSUMER_SERVICE_NAME, $name);
             \Yii::$container->setSingleton($serviceAlias, function () use ($options, $autoDeclare) {
                 /**
                  * @var $connection AbstractConnection
@@ -137,7 +149,7 @@ class DependencyInjection implements BootstrapInterface
                     $callbackClass = $this->getCallbackClass($callback);
                     $queues[$queueName] = [$callbackClass, 'execute'];
                 }
-                \Yii::$container->invoke([$consumer, 'setName'], [$options['name']]);
+                \Yii::$container->invoke([$consumer, 'setName'], [$name]);
                 \Yii::$container->invoke([$consumer, 'setQueues'], [$queues]);
                 \Yii::$container->invoke([$consumer, 'setQos'], [$options['qos']]);
                 \Yii::$container->invoke([$consumer, 'setIdleTimeout'], [$options['idle_timeout']]);
