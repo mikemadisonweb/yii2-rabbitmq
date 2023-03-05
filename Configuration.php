@@ -400,10 +400,16 @@ class Configuration extends Component
                 if (!isset($item['name'])) {
                     $item['name'] = '';
                 }
-                if (isset($names[$item['name']])) {
-                    throw new InvalidConfigException("Duplicate name `{$item['name']}` in {$key}");
+                
+                $name = $item['name'];
+                if(is_a($name, \UnitEnum::class)){
+                    $name = $item['name']->name;
                 }
-                $names[$item['name']] = true;
+                
+                if (isset($names[$name])) {
+                    throw new InvalidConfigException("Duplicate name `{$name}` in {$key}");
+                }
+                $names[$name] = true;
             }
         }
     }
